@@ -113,7 +113,7 @@ void Renderer::update()
 	{
 		// World space transformations
 		glm::vec3 scale(1.0f);
-		glm::vec3 rotation(x, x, x);
+		glm::vec3 rotation(x);
 		glm::vec3 translation(0.0f, 0.0f, 5.0f);
 		x += 0.01f;
 
@@ -305,7 +305,7 @@ void Renderer::render_triangles_in_scene()
 				break;
 			case SOLID_WIREFRAME:
 				Graphics::draw_solid(triangle, Colors::WHITE);
-				Graphics::draw_wireframe(triangle, Colors::BLACK);
+				Graphics::draw_wireframe_3d(triangle, Colors::GREEN);
 				break;
 		}
 	}
@@ -320,13 +320,14 @@ void Renderer::draw_face_normal(const Triangle& triangle)
 	glm::vec3 b(triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[1].z);
 	glm::vec3 c(triangle.vertices[2].x, triangle.vertices[2].y, triangle.vertices[2].z);
 	glm::vec4 center = glm::vec4((a + b + c) / 3.0f, 1.0f);
-	glm::vec4 end = center + (glm::vec4(triangle.face_normal, 1.0f) * normal_length);
+	glm::vec4 end = center + (glm::vec4(triangle.face_normal * normal_length, 1.0f));
 
 	Math3D::project_point(center, projection_matrix, Graphics::viewport);
 	Math3D::project_point(end, projection_matrix, Graphics::viewport);
 
 	// Draw a line from the center to the center + normal
-	Graphics::draw_line_bresenham((int)center.x, (int)center.y, (int)end.x, (int)end.y, Colors::WHITE);
+	Graphics::draw_line_bresenham_3d(int(center.x), int(center.y), center.w,
+		int(end.x), int(end.y), end.w, Colors::RED);
 }
 
 void Renderer::compute_face_normal(Triangle& transformed_triangle)

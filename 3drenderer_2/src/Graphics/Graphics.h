@@ -2,6 +2,7 @@
 
 #include "../Misc/3d_types.h"
 #include "../Renderer/Viewport.h"
+#include <intrin.h>
 
 struct Gizmo;
 struct Triangle;
@@ -21,10 +22,10 @@ namespace Graphics
 		const int& y1, const uint32& color);
 	void draw_line_bresenham(const int& x0, const int& y0, const int& x1,
 		const int& y1, const uint32& color);
-	void draw_line_dda_3d(const int& x1, const int& y1,
-		const float& z1, const int& x2, const int& y2, const float& z2,
-		const uint32& color);
+	void draw_line_bresenham_3d(const int& x1, const int& y1, const float& w1,
+		const int& x2, const int& y2, const float& w2, const uint32& color);
 	void draw_wireframe(const Triangle& triangle, const uint32& color);
+	void draw_wireframe_3d(const Triangle& triangle, const uint32& color);
 	void draw_solid(const Triangle& triangle, const uint32& color);
 	void draw_vertices(const Triangle& triangle, int point_size, const uint32& color);
 	void draw_gizmo(const Gizmo& gizmo);

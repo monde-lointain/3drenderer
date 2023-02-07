@@ -18,7 +18,12 @@ namespace Math3D
 	void transform_point(glm::vec4& point, const glm::mat4& world_matrix, const glm::mat4& view_matrix);
 	void project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 		const Viewport& viewport);
+	void project(glm::vec4& point, const glm::mat4& projection_matrix);
+	void homogenize(glm::vec4& point, const float& one_over_w);
+	void to_ndc(glm::vec4& point, const float& one_over_w);
+	void to_screen_space(glm::vec4& point, const Viewport& viewport);
 	int orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c);
 	float orient2d_f(
 		const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
+	float get_triangle_area_slow(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
 };	  // namespace Math3D

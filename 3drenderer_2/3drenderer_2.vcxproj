@@ -172,7 +172,7 @@
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>
       </SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG; PROFILING_ON</PreprocessorDefinitions>
       <ConformanceMode>
       </ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -180,7 +180,7 @@
       <SupportJustMyCode>
       </SupportJustMyCode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <ScanSourceForModuleDependencies />
       <TranslateIncludes />
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -201,13 +201,13 @@
       <CallingConvention />
       <ErrorReporting />
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4100; 4101; 4127; 4189; 4201</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib; SDL2main.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib; SDL2main.lib; SDL2_image.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
       <ManifestFile />
       <AllowIsolation />
       <EnableUAC />
@@ -236,7 +236,7 @@
       </ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <ScanSourceForModuleDependencies />
       <TranslateIncludes />
       <SupportJustMyCode />
@@ -257,7 +257,7 @@
       <CallingConvention />
       <ErrorReporting />
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4100; 4101; 4127; 4189; 4201</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
@@ -265,7 +265,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib; SDL2main.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib; SDL2main.lib; SDL2_image.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
       <ManifestFile />
       <AllowIsolation />
       <EnableUAC />
@@ -294,7 +294,7 @@
       </ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <ScanSourceForModuleDependencies>
       </ScanSourceForModuleDependencies>
       <TranslateIncludes>
@@ -329,7 +329,7 @@
       <ErrorReporting>
       </ErrorReporting>
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4100; 4101; 4127; 4189; 4201</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
@@ -337,7 +337,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib; SDL2main.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib; SDL2main.lib; SDL2_image.lib; user32.lib; gdi32.lib; shell32.lib; winmm.lib</AdditionalDependencies>
       <ManifestFile>
       </ManifestFile>
       <AllowIsolation>
@@ -379,6 +379,7 @@
     <ClCompile Include="src\Misc\debug_helpers.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Viewport.cpp" />
+    <ClCompile Include="src\Mesh\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Misc\3d_algorithm.h" />
@@ -637,7 +638,8 @@
     <ClInclude Include="src\Misc\debug_helpers.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Renderer\Viewport.h" />
-    <ClInclude Include="src\Texture\tex2.h" />
+    <ClInclude Include="src\Mesh\tex2.h" />
+    <ClInclude Include="src\Mesh\Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\glm\detail\func_common.inl" />

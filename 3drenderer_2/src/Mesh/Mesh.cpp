@@ -7,6 +7,23 @@
 #include <fast_obj.h>
 #include <iostream>
 
+Mesh::Mesh()
+{
+	rotation = glm::vec3(0.0f);
+	scale = glm::vec3(1.0f);
+	translation = glm::vec3(0.0f);
+	texture = new Texture;
+}
+
+Mesh::~Mesh()
+{
+	if (texture)
+	{
+		texture->destroy();
+		delete texture;
+	}
+}
+
 void Mesh::load_from_obj(const char* filename)
 {
 	fastObjMesh* fast_mesh = fast_obj_read(filename);
@@ -62,6 +79,36 @@ void Mesh::load_from_obj(const char* filename)
 	fast_obj_destroy(fast_mesh);
 }
 
+void Mesh::load_texture(const char* filename)
+{
+	texture->surface = IMG_Load(filename);
+
+	if (!texture->surface) {
+		std::cerr << "Failed to load " << filename << ".\n";
+		set_texture_on_triangles(nullptr);
+		return;
+	}
+
+	// Convert to the pixel format of the renderer
+	texture->surface =
+		SDL_ConvertSurfaceFormat(texture->surface, SDL_PIXELFORMAT_BGRA8888, 0);
+
+	texture->width = texture->surface->w;
+	texture->height = texture->surface->h;
+	texture->pixels = (uint32*)texture->surface->pixels;
+
+	// NOTE: ugly
+	set_texture_on_triangles(texture);
+}
+
+void Mesh::set_texture_on_triangles(Texture* texture_to_set)
+{
+	for (Triangle& triangle : triangles)
+	{
+		triangle.texture = texture_to_set;
+	}
+}
+
 void Mesh::rotate(float x, float y, float z)
 {
 	rotation.x += x;
@@ -85,8 +132,9 @@ Mesh* create_mesh(const char* filename)
 {
 	Mesh* mesh = new Mesh;
 	mesh->load_from_obj(filename);
-	mesh->rotation = glm::vec3(0.0f);
-	mesh->scale = glm::vec3(1.0f);
-	mesh->translation = glm::vec3(0.0f);
+	if (!mesh)
+	{
+		return nullptr;
+	}
 	return mesh;
 }

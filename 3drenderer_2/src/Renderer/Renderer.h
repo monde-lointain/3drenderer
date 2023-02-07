@@ -17,7 +17,9 @@ enum ERenderMode
 	WIREFRAME,
 	WIREFRAME_VERTICES,
 	SOLID,
-	SOLID_WIREFRAME
+	SOLID_WIREFRAME,
+	TEXTURED,
+	TEXTURED_WIREFRAME,
 };
 
 struct Renderer
@@ -53,7 +55,7 @@ struct Renderer
 
 	void transform_triangles(Mesh* mesh, const glm::mat4& world_matrix, const glm::mat4& view_matrix);
 	void transform_gizmo(const glm::mat4& world_matrix, const glm::mat4& view_matrix);
-	void project_triangle(Triangle& triangle);
+	bool project_triangle(Triangle& triangle);
 	void project_gizmo();
 	void render_triangles_in_scene();
 	void draw_face_normal(const Triangle& triangle);

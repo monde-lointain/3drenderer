@@ -48,6 +48,9 @@
     <ClCompile Include="src\Mesh\Triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mesh\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Misc\3d_types.h">
@@ -809,7 +812,7 @@
     <ClInclude Include="src\Mesh\Triangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture\tex2.h">
+    <ClInclude Include="src\Mesh\tex2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Gizmo.h">
@@ -819,6 +822,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Misc\3d_algorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mesh\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

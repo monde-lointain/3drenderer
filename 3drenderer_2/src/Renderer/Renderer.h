@@ -53,9 +53,9 @@ struct Renderer
 	std::vector<Mesh*> meshes;
 	std::vector<Triangle> triangles_in_scene;
 
-	void transform_triangles(Mesh* mesh, const glm::mat4& world_matrix, const glm::mat4& view_matrix);
-	void transform_gizmo(const glm::mat4& world_matrix, const glm::mat4& view_matrix);
-	bool project_triangle(Triangle& triangle);
+	void transform_triangles(Mesh* mesh, const glm::mat4& modelview_matrix);
+	void transform_gizmo(const glm::mat4& modelview_matrix);
+	void project_triangle(Triangle& triangle);
 	void project_gizmo();
 	void render_triangles_in_scene();
 	void draw_face_normal(const Triangle& triangle);

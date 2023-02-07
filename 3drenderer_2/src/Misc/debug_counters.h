@@ -59,13 +59,15 @@ std::map<debug_counters, std::string> counter_names = {
 void dump_cycle_counters()
 {
 #ifdef PROFILING_ON
+	// move cursor to row 1, column 1
+	std::cout << "\033[1;1H";
 	for (const auto& counter : counters)
 	{
+		// use std::endl to flush the output
 		std::cout << counter_names[counter.first] << ": "
-				  << counter.second.cycle_count << " cycles ("
-				  << counter.second.elapsed_time.count() << " ms)\n";
+			<< counter.second.cycle_count << " cycles ("
+			<< counter.second.elapsed_time.count() << " ms)" << std::endl;
 	}
-
 	counters.clear();
 #endif
 }

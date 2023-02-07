@@ -21,7 +21,7 @@ Renderer::Renderer()
 	current_fps = 0.0f;
 	render_mode = TEXTURED;
 	display_face_normals = false;
-	backface_culling = true;
+	backface_culling = false;
 	camera.position = glm::vec3(0.0f, 0.0f, -2.0f);
 	projection_matrix = glm::mat4(0.0f);
 }
@@ -38,7 +38,7 @@ void Renderer::setup()
 
 	// Setup the camera and projection matrix
 	camera.fov = 130.0f; 
-	camera.aspect = 4.0f / 3.0f;
+	camera.aspect = (float)Graphics::viewport.width / (float)Graphics::viewport.height;
 	camera.znear = 0.1f;
 	camera.zfar = 50.0f;
 	projection_matrix = Math3D::create_projection_matrix(camera);
@@ -69,9 +69,12 @@ void Renderer::process_input()
 		switch (event.type)
 		{
 			case SDL_QUIT:
+			{
 				is_running = false;
 				break;
+			}
 			case SDL_KEYDOWN:
+			{
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 				{
 					is_running = false;
@@ -125,6 +128,7 @@ void Renderer::process_input()
 					break;
 				}
 				break;
+			}
 		}
 	}
 	END_TIMED_BLOCK(Input)
@@ -148,11 +152,14 @@ void Renderer::update()
 
 		// Initialize the view matrix looking in the positive z direction
 		glm::mat4 view_matrix = glm::lookAt(camera.position,
-			glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		// Concatenate the world and view matrices into the modelview matrix
+		glm::mat4 modelview_matrix = view_matrix * world_matrix;
 
 		// Update the positons of the gizmo and all triangles in 3D space
-		transform_triangles(mesh, world_matrix, view_matrix);
-		transform_gizmo(world_matrix, view_matrix);
+		transform_triangles(mesh, modelview_matrix);
+		transform_gizmo(modelview_matrix);
 	}
 	END_TIMED_BLOCK(Update)
 }
@@ -160,7 +167,7 @@ void Renderer::update()
 void Renderer::render()
 {
 	BEGIN_TIMED_BLOCK(Render)
-	Graphics::clear_framebuffer(Colors::MAGENTA);
+	Graphics::clear_framebuffer(Colors::BLUE);
 	Graphics::clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -230,8 +237,7 @@ void Renderer::destroy()
 	Graphics::close_window();
 }
 
-void Renderer::transform_triangles(
-	Mesh* mesh, const glm::mat4& world_matrix, const glm::mat4& view_matrix)
+void Renderer::transform_triangles(Mesh* mesh, const glm::mat4& modelview_matrix)
 {
 	for (const Triangle& triangle : mesh->triangles)
 	{
@@ -250,11 +256,11 @@ void Renderer::transform_triangles(
 			triangle.vertices[2]
 		};
 
-		// Multiply the vertices by the world and view matrices in order to get
-		// them ready for projection
+		// Multiply the vertices by the modelview matrix to get them ready for
+		// projection
 		for (glm::vec4& vertex : vertices)
 		{
-			Math3D::transform_point(vertex, world_matrix, view_matrix);
+			Math3D::transform_point(vertex, modelview_matrix);
 		}
 
 		// Set the vertices on the triangle to our new transformed vertices
@@ -269,19 +275,18 @@ void Renderer::transform_triangles(
 	}
 }
 
-void Renderer::transform_gizmo(
-	const glm::mat4& world_matrix, const glm::mat4& view_matrix)
+void Renderer::transform_gizmo(const glm::mat4& modelview_matrix)
 {
-	// Transform the bases and origin
+	// Transform the bases and origin by the modelview matrix
 	for (glm::vec4& vector : gizmo.bases)
 	{
-		Math3D::transform_point(vector, world_matrix, view_matrix);
+		Math3D::transform_point(vector, modelview_matrix);
 	}
-	Math3D::transform_point(gizmo.origin, world_matrix, view_matrix);
+	Math3D::transform_point(gizmo.origin, modelview_matrix);
 }
 
 // TODO: This should really be in Math3D I think
-bool Renderer::project_triangle(Triangle& triangle)
+void Renderer::project_triangle(Triangle& triangle)
 {
 	int num_vertices = 3;
 	for (int i = 0; i < num_vertices; i++)
@@ -292,30 +297,18 @@ bool Renderer::project_triangle(Triangle& triangle)
 		triangle.inv_w[i] = 1.0f / triangle.vertices[i].w;
 		// Perform perspective divide
 		Math3D::to_ndc(triangle.vertices[i], triangle.inv_w[i]);
-	}
-
-	// Perform backface culling
-	if (!triangle.is_front_facing())
-	{
-		return true;
-	}
-
-	for (int i = 0; i < num_vertices; i++)
-	{
 		// Scale into view
-		Math3D::to_screen_space(triangle.vertices[i], Graphics::viewport);
+		Math3D::to_screen_space(triangle.vertices[i], Graphics::viewport, camera);
 	}
-
-	return false;
 }
 
 void Renderer::project_gizmo()
 {
 	for (glm::vec4& vector : gizmo.bases)
 	{
-		Math3D::project_point(vector, projection_matrix, Graphics::viewport);
+		Math3D::project_point(vector, projection_matrix, Graphics::viewport, camera);
 	}
-	Math3D::project_point(gizmo.origin, projection_matrix, Graphics::viewport);
+	Math3D::project_point(gizmo.origin, projection_matrix, Graphics::viewport, camera);
 }
 
 void Renderer::render_triangles_in_scene()
@@ -328,14 +321,13 @@ void Renderer::render_triangles_in_scene()
 			draw_face_normal(triangle);
 		}
 		
-		// Project the triangle into screen space. NOTE: The backface culling
-		// test is performed here too!
-		bool should_cull = project_triangle(triangle);
+		// Project the triangle into screen space.
+		project_triangle(triangle);
 
 		// Check to see if the triangle should be culled
 		if (backface_culling)
 		{
-			if (should_cull)
+			if (!triangle.is_front_facing())
 			{
 				continue;
 			}
@@ -345,33 +337,46 @@ void Renderer::render_triangles_in_scene()
 		switch (render_mode)
 		{
 			case VERTICES_ONLY:
+			{
 				Graphics::draw_vertices(triangle, 4, Colors::YELLOW);
 				break;
+			}
 			case WIREFRAME:
+			{
 				Graphics::draw_wireframe(triangle, Colors::GREEN);
 				break;
+			}
 			case WIREFRAME_VERTICES:
+			{
 				Graphics::draw_wireframe(triangle, Colors::GREEN);
 				Graphics::draw_vertices(triangle, 4, Colors::YELLOW);
 				break;
+			}
 			case SOLID:
+			{
 				Graphics::draw_solid(triangle, Colors::WHITE);
 				break;
+			}
 			case SOLID_WIREFRAME:
-				Graphics::draw_solid(triangle, Colors::WHITE);
-				Graphics::draw_wireframe_3d(triangle, Colors::BLACK);
+			{
+				Graphics::draw_solid(triangle, Colors::BLACK);
+				Graphics::draw_wireframe_3d(triangle, Colors::WHITE);
 				break;
+			}
 			case TEXTURED:
+			{
 				if (!triangle.texture)
 				{
 					Graphics::draw_solid(triangle, Colors::RED);
 				}
 				else
 				{
-					Graphics::draw_textured_slowly(triangle);
+					Graphics::draw_textured(triangle);
 				}
 				break;
+			}
 			case TEXTURED_WIREFRAME:
+			{
 				if (!triangle.texture)
 				{
 					Graphics::draw_solid(triangle, Colors::RED);
@@ -379,10 +384,11 @@ void Renderer::render_triangles_in_scene()
 				}
 				else
 				{
-					Graphics::draw_textured_slowly(triangle);
+					Graphics::draw_textured(triangle);
 					Graphics::draw_wireframe_3d(triangle, Colors::GREEN);
 				}
 				break;
+			}
 		}
 	}
 	END_TIMED_BLOCK(RenderTriangles)
@@ -390,40 +396,44 @@ void Renderer::render_triangles_in_scene()
 
 void Renderer::draw_face_normal(const Triangle& triangle)
 {
-	// Compute the points in 3D space to draw the lines
-	float normal_length = 0.2f;
-	glm::vec3 a(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
-	glm::vec3 b(triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[1].z);
-	glm::vec3 c(triangle.vertices[2].x, triangle.vertices[2].y, triangle.vertices[2].z);
-	glm::vec4 center = glm::vec4((a + b + c) / 3.0f, 1.0f);
-	glm::vec4 end = center + (glm::vec4(triangle.face_normal * normal_length, 1.0f));
+	/* TODO: Redo this function */
 
-	// TODO: Change to reflect the revised pipeline order
-	Math3D::project_point(center, projection_matrix, Graphics::viewport);
-	Math3D::project_point(end, projection_matrix, Graphics::viewport);
+	//// Compute the points in 3D space to draw the lines
+	//float normal_length = 1.f;
+	//glm::vec3 a(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
+	//glm::vec3 b(triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[1].z);
+	//glm::vec3 c(triangle.vertices[2].x, triangle.vertices[2].y, triangle.vertices[2].z);
+	//glm::vec4 center = glm::vec4((a + b + c) / 3.0f, 1.0f);
+	//glm::vec4 end = center + (glm::vec4(triangle.face_normal * normal_length, 1.0f));
 
-	switch (render_mode)
-	{
-		case VERTICES_ONLY:
-		case WIREFRAME:
-		case WIREFRAME_VERTICES:
-			Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
-				center.w, int(end.x), int(end.y), end.w, Colors::WHITE);
-			break;
-		case SOLID:
-		case SOLID_WIREFRAME:
-			Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
-				center.w, int(end.x), int(end.y), end.w, Colors::GREEN);
-			break;
-	}
+	//// TODO: Change to reflect the revised pipeline order
+	//Math3D::project_point(center, projection_matrix, Graphics::viewport, camera);
+	//Math3D::project_point(end, projection_matrix, Graphics::viewport, camera);
+
+	//switch (render_mode)
+	//{
+	//	case VERTICES_ONLY:
+	//	case WIREFRAME:
+	//	case WIREFRAME_VERTICES:
+	//		Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
+	//			center.z, int(end.x), int(end.y), end.z, Colors::WHITE);
+	//		break;
+	//	case SOLID:
+	//	case SOLID_WIREFRAME:
+	//		Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
+	//			center.z, int(end.x), int(end.y), end.z, Colors::GREEN);
+	//		break;
+	//}
 }
 
 void Renderer::compute_face_normal(Triangle& transformed_triangle)
 {
-	glm::vec3 ab = glm::vec3(transformed_triangle.vertices[1] - transformed_triangle.vertices[0]);
-	glm::vec3 ca = glm::vec3(transformed_triangle.vertices[2] - transformed_triangle.vertices[0]);
-	glm::vec3 face_normal = glm::normalize(glm::cross(ab, ca));
-	transformed_triangle.face_normal = face_normal;
+	/* TODO: Redo this function */
+
+	//glm::vec3 ab = glm::vec3(transformed_triangle.vertices[1] - transformed_triangle.vertices[0]);
+	//glm::vec3 ca = glm::vec3(transformed_triangle.vertices[2] - transformed_triangle.vertices[0]);
+	//glm::vec3 face_normal = glm::normalize(glm::cross(ab, ca));
+	//transformed_triangle.face_normal = face_normal;
 }
 
 void Renderer::set_render_mode(ERenderMode mode)

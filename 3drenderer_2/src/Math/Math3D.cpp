@@ -27,40 +27,10 @@ glm::mat4 Math3D::create_world_matrix(
 	return world_matrix;
 }
 
-void Math3D::transform_point(glm::vec4& point, const glm::mat4& world_matrix,
-	const glm::mat4& view_matrix)
+void Math3D::transform_point(glm::vec4& point, const glm::mat4& modelview_matrix)
 {
 	// Transform the point from model space to camera space
-	glm::mat4 modelview_matrix = view_matrix * world_matrix;
 	point = glm::vec4(modelview_matrix * point);
-}
-
-void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
-	const Viewport& viewport)
-{
-	// Transform the point from camera space to clip space
-	point = glm::vec4(projection_matrix * point);
-
-	float one_over_w = 1.0f / point.w;
-
-	// Perform the perspective divide
-	if (point.w != 0.0f)
-	{
-		point.x *= one_over_w;
-		point.y *= one_over_w;
-		point.z *= one_over_w;
-	}
-
-	// Transform the point from clip space to screen space
-	point.x = (point.x + 1.0f) * (float)viewport.width * 0.5f;
-	point.y = (point.y + 1.0f) * (float)viewport.height * 0.5f;
-
-	// Normalize the z coordinate
-	point.z = (point.z + 1.0f) * 0.5f;
-
-	//// NOTE: REMOVE THIS IF IT DOESN'T WORK!!! WE'RE TRYING TO SEE IF TAKING THE
-	//// RECIPROCAL OF W WILL DO ANYTHING!
-	//point.w = 1.0f / point.w;
 }
 
 void Math3D::project(glm::vec4& point, const glm::mat4& projection_matrix)
@@ -75,14 +45,32 @@ void Math3D::to_ndc(glm::vec4& point, const float& one_over_w)
 	point.z *= one_over_w;
 }
 
-void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport)
+void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport, const Camera& camera)
 {
 	// Transform the point from clip space to screen space
 	point.x = (point.x + 1.0f) * (float)viewport.width * 0.5f;
 	point.y = (point.y + 1.0f) * (float)viewport.height * 0.5f;
 
-	// Normalize the z coordinate
+	// Normalize the z coordinate [0, 1]
+	//point.z = (point.z * camera.zfar + camera.zfar - point.z * camera.znear + camera.znear) * 0.5f;
 	point.z = (point.z + 1.0f) * 0.5f;
+}
+
+// NOTE: This is only called for Gizmo points only! Triangles have a different
+// version of this in Renderer::project_triangle. I should really move that
+// function over to this namespace honestly
+void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
+	const Viewport& viewport, const Camera& camera)
+{
+	// Transform the point from camera space to clip space
+	project(point, projection_matrix);
+
+	float one_over_w = point.w != 0.0f ? 1.0f / point.w : 1.0f;
+
+	// Perform the perspective divide
+	to_ndc(point, one_over_w);
+
+	to_screen_space(point, viewport, camera);
 }
 
 int Math3D::orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c)
@@ -98,12 +86,5 @@ float Math3D::orient2d_f(
 {
 	float signed_area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	// See comment for orient2d_i
-	return signed_area;
-}
-
-float Math3D::get_triangle_area_slow(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
-{
-	float signed_area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-	float signed_area = signed_area2 * 0.5f;
 	return signed_area;
 }

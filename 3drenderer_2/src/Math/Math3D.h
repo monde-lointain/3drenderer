@@ -15,15 +15,15 @@ namespace Math3D
 	glm::mat4 create_world_matrix(glm::vec3 scale = glm::vec3(1.0f),
 		glm::vec3 rotation = glm::vec3(0.0f),
 		glm::vec3 translation = glm::vec3(0.0f));
-	void transform_point(glm::vec4& point, const glm::mat4& world_matrix, const glm::mat4& view_matrix);
+	void transform_point(glm::vec4& point, const glm::mat4& modelview_matrix);
 	void project_point(glm::vec4& point, const glm::mat4& projection_matrix,
-		const Viewport& viewport);
+		const Viewport& viewport, const Camera& camera);
 	void project(glm::vec4& point, const glm::mat4& projection_matrix);
-	void homogenize(glm::vec4& point, const float& one_over_w);
 	void to_ndc(glm::vec4& point, const float& one_over_w);
-	void to_screen_space(glm::vec4& point, const Viewport& viewport);
+	void to_screen_space(
+		glm::vec4& point, const Viewport& viewport, const Camera& camera);
 	int orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c);
 	float orient2d_f(
 		const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
-	float get_triangle_area_slow(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
-};	  // namespace Math3D
+
+};

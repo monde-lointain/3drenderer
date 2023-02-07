@@ -27,7 +27,7 @@ static float* depth_buffer = nullptr;
 
 bool Graphics::initialize_window()
 {
-	viewport = { 800, 600, "3D Renderer" };
+	viewport = { 1280, 720, "3D Renderer" };
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
@@ -242,7 +242,7 @@ void Graphics::draw_line_bresenham(const int& x0, const int& y0, const int& x1,
 }
 
 void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
-	const float& w1, const int& x2, const int& y2, const float& w2,
+	const float& z1, const int& x2, const int& y2, const float& z2,
 	const uint32& color)
 {
 	int dx = abs(x2 - x1);
@@ -257,7 +257,12 @@ void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
 
 	int current_x = x1;
 	int current_y = y1;
-	float depth = w1;
+	float depth = z1;
+
+	// For depth interpolation
+	float dz = z2 - z1;
+	float line_len =
+		sqrtf((float)((x2 - x1) * (x2 - x1)) + (float)((y2 - y1) * (y2 - y1)));
 
 	// Loop until the line is drawn
 	while (true)
@@ -269,16 +274,12 @@ void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
 		if (current_x >= 0 && current_x < viewport.width && 
 			current_y >= 0 && current_y < viewport.height)
 		{
-			// Interpolate the depth of the pixel based on the depth of the two
-			// endpoints
-			if (dx > dy)
-			{
-				depth = w1 + (w2 - w1) * (float)(current_x - x1) / (float)(x2 - x1);
-			}
-			else
-			{
-				depth = w1 + (w2 - w1) * (float)(current_y - y1) / (float)(y2 - y1);
-			}
+			// Is there a faster way to do this?
+			float curr_len =
+				sqrtf((float)((current_x - x1) * (current_x - x1))
+					  + (float)((current_y - y1) * (current_y - y1)));
+			float pct = curr_len / line_len;
+			depth = z1 + (dz * pct);
 
 			// Perform a depth check using the z-buffer
 			if (depth <= depth_buffer[index])
@@ -325,25 +326,22 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
 	vec2i b = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
 	vec2i c = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
-	float wa = triangle.vertices[0].w;
-	float wb = triangle.vertices[1].w;
-	float wc = triangle.vertices[2].w;
-	draw_line_bresenham_3d(a.x, a.y, wa, b.x, b.y, wb, color);
-	draw_line_bresenham_3d(b.x, b.y, wb, c.x, c.y, wc, color);
-	draw_line_bresenham_3d(c.x, c.y, wc, a.x, a.y, wa, color);
+	float za = triangle.vertices[0].z;
+	float zb = triangle.vertices[1].z;
+	float zc = triangle.vertices[2].z;
+	draw_line_bresenham_3d(a.x, a.y, za, b.x, b.y, zb, color);
+	draw_line_bresenham_3d(b.x, b.y, zb, c.x, c.y, zc, color);
+	draw_line_bresenham_3d(c.x, c.y, zc, a.x, a.y, za, color);
 }
 
 void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 {
-	vec2i v0 = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
-	vec2i v1 = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
-	vec2i v2 = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
-	float v0w = triangle.vertices[0].w;
-	float v1w = triangle.vertices[1].w;
-	float v2w = triangle.vertices[2].w;
-	tex2 uv0 = { triangle.texcoords[0].u,triangle.texcoords[0].v };
-	tex2 uv1 = { triangle.texcoords[1].u,triangle.texcoords[1].v };
-	tex2 uv2 = { triangle.texcoords[2].u,triangle.texcoords[2].v };
+	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
+	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
+	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };
+	float v0z = triangle.vertices[0].z;
+	float v1z = triangle.vertices[1].z;
+	float v2z = triangle.vertices[2].z;
 
 	// Calculate triangle bounding box
 	int min_x = std::min({ int(v0.x), int(v1.x), int(v2.x) });
@@ -358,17 +356,20 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 	max_y = std::min(max_y, viewport.height - 1);
 	
 	// Compute the inverse area of the triangle
-	float area = (float)Math3D::orient2d_i(v0, v1, v2);
+	float area = Math3D::orient2d_f(v0, v1, v2);
 	float inv_area = 1.0f / area;
 
-	vec2i p;
+	glm::vec2 p;
 	// Loop over the bounding box and rasterize the triangle
-	for (p.y = min_y; p.y <= max_y; p.y++) {
-		for (p.x = min_x; p.x <= max_x; p.x++) {
+	for (int x = min_x; x <= max_x; x++) {
+		for (int y = min_y; y <= max_y; y++) {
+			p.x = (float)x + 0.5f;
+			p.y = (float)y + 0.5f;
+
 			// Compute barycentric weights
-			float alpha = (float)Math3D::orient2d_i(v1, v2, p);
-			float beta = (float)Math3D::orient2d_i(v2, v0, p);
-			float gamma = (float)Math3D::orient2d_i(v0, v1, p);
+			float alpha = Math3D::orient2d_f(v1, v2, p);
+			float beta = Math3D::orient2d_f(v2, v0, p);
+			float gamma = Math3D::orient2d_f(v0, v1, p);
 			alpha *= inv_area;
 			beta *= inv_area;
 			gamma *= inv_area;
@@ -376,26 +377,19 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 			// Check if the point is inside the triangle
 			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
 			{
-				// Interpolate depth value
-				float depth = v0w * (float)alpha + v1w * (float)beta + v2w * (float)gamma;
+				// Interpolate depth values
+				float depth = v0z * alpha + v1z * beta + v2z * gamma;
 
-				// Check depth against w-buffer and only render if the pixel is in front
-				int index = viewport.width * (viewport.height - p.y - 1) + p.x;
-				if (depth >= depth_buffer[index]) {
+				// Check depth against z-buffer and only render if the pixel is in front
+				int index = viewport.width * (viewport.height - y - 1) + x;
+				float current_depth = depth_buffer[index];
+				if (depth >= current_depth) {
 					continue;
 				}
 				depth_buffer[index] = depth;
 
-				// Interpolate texture coordinates
-				float u = uv0.u * alpha + uv1.u * beta + uv2.u * gamma;
-				float v = uv0.v * alpha + uv1.v * beta + uv2.v * gamma;
-
-				// Perform perspective correct texture mapping
-				u /= depth;
-				v /= depth;
-
-				// Look up texel value and set pixel color
-				draw_pixel(p.x, p.y, color);
+				// Set pixel color
+				draw_pixel(int(p.x), int(p.y), color);
 			}
 		}
 	}
@@ -403,85 +397,9 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 
 void Graphics::draw_textured(const Triangle& triangle)
 {
-	vec2i v0 = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
-	vec2i v1 = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
-	vec2i v2 = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
-	float v0w = triangle.vertices[0].w;
-	float v1w = triangle.vertices[1].w;
-	float v2w = triangle.vertices[2].w;
-	tex2 uv0 = { triangle.texcoords[0].u,triangle.texcoords[0].v };
-	tex2 uv1 = { triangle.texcoords[1].u,triangle.texcoords[1].v };
-	tex2 uv2 = { triangle.texcoords[2].u,triangle.texcoords[2].v };
-	Texture* texture = triangle.texture;
-
-	// Calculate triangle bounding box
-	int min_x = std::min({ int(v0.x), int(v1.x), int(v2.x) });
-	int max_x = std::max({ int(v0.x), int(v1.x), int(v2.x) });
-	int min_y = std::min({ int(v0.y), int(v1.y), int(v2.y) });
-	int max_y = std::max({ int(v0.y), int(v1.y), int(v2.y) });
-
-	// Clip triangle bounding box to screen
-	min_x = std::max(min_x, 0);
-	max_x = std::min(max_x, viewport.width - 1);
-	min_y = std::max(min_y, 0);
-	max_y = std::min(max_y, viewport.height - 1);
-
-	// Compute the inverse area of the triangle
-	float area = (float)Math3D::orient2d_i(v0, v1, v2);
-	float inv_area = 1.0f / area;
-
-	vec2i p;
-	// Loop over the bounding box and rasterize the triangle
-	for (p.y = min_y; p.y <= max_y; p.y++) {
-		for (p.x = min_x; p.x <= max_x; p.x++) {
-			// Compute barycentric weights
-			float alpha = (float)Math3D::orient2d_i(v1, v2, p);
-			float beta = (float)Math3D::orient2d_i(v2, v0, p);
-			float gamma = (float)Math3D::orient2d_i(v0, v1, p);
-			alpha *= inv_area;
-			beta *= inv_area;
-			gamma *= inv_area;
-
-			// Check if the point is inside the triangle
-			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
-			{
-				// Interpolate depth value
-				float depth = v0w * (float)alpha + v1w * (float)beta + v2w * (float)gamma;
-
-				// Check depth against w-buffer and only render if the pixel is in front
-				int index = viewport.width * (viewport.height - p.y - 1) + p.x;
-				if (depth >= depth_buffer[index]) {
-					continue;
-				}
-				depth_buffer[index] = depth;
-
-				// Interpolate texture coordinates
-				float u = (uv0.u / v0w) * alpha + (uv1.u / v1w) * beta + (uv2.u / v2w) * gamma;
-				float v = (uv0.v / v0w) * alpha + (uv1.v / v1w) * beta + (uv2.v / v2w) * gamma;
-
-				float inv_w = 1.0f / depth;
-
-				u /= inv_w;
-				v /= inv_w;
-
-				// Look up texel value and set pixel color
-				int tex_x = abs(int(u * (float)texture->width)) % texture->width;
-				int tex_y = abs(int(v * (float)texture->height)) % texture->height;
-				int tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
-				draw_pixel(p.x, p.y, get_zbuffer_color(v));
-			}
-		}
-	}
-}
-
-void Graphics::draw_textured_slowly(const Triangle& triangle)
-{
-	// TODO: Convert these to float vectors. We literally don't use the ints
-	// anywhere except for the bounding box
 	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
 	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
 	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };
-	// TODO: Convert v0-v2 into vec4s and put these w values back in them
 	float v0z = triangle.vertices[0].z;
 	float v1z = triangle.vertices[1].z;
 	float v2z = triangle.vertices[2].z;
@@ -491,7 +409,6 @@ void Graphics::draw_textured_slowly(const Triangle& triangle)
 	float inv_w0 = triangle.inv_w[0];
 	float inv_w1 = triangle.inv_w[1];
 	float inv_w2 = triangle.inv_w[2];
-
 	Texture* texture = triangle.texture;
 
 	// Calculate triangle bounding box
@@ -510,9 +427,6 @@ void Graphics::draw_textured_slowly(const Triangle& triangle)
 	float area = Math3D::orient2d_f(v0, v1, v2);
 	float inv_area = 1.0f / area;
 
-	float area_slow = Math3D::get_triangle_area_slow(v0, v1, v2);
-	float inv_area_slow = 1.0f / area_slow;
-
 	glm::vec2 p;
 	// Loop over the bounding box and rasterize the triangle
 	for (int x = min_x; x <= max_x; x++) {
@@ -528,18 +442,13 @@ void Graphics::draw_textured_slowly(const Triangle& triangle)
 			beta *= inv_area;
 			gamma *= inv_area;
 
-			// Compute the barycentric weights in the slow (but known to be correct) way
-			float alpha_slow = Math3D::get_triangle_area_slow(v1, v2, p) * inv_area_slow;
-			float beta_slow = Math3D::get_triangle_area_slow(v2, v0, p) * inv_area_slow;
-			float gamma_slow = Math3D::get_triangle_area_slow(v0, v1, p) * inv_area_slow;
-
 			// Check if the point is inside the triangle
-			if (alpha_slow >= 0.0f && beta_slow >= 0.0f && gamma_slow >= 0.0f)
+			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
 			{
-				// Interpolate sdepth values
-				float depth = v0z * alpha_slow + v1z * beta_slow + v2z * gamma_slow;
+				// Interpolate depth values
+				float depth = v0z * alpha + v1z * beta + v2z * gamma;
 
-				// Check depth against w-buffer and only render if the pixel is in front
+				// Check depth against z-buffer and only render if the pixel is in front
 				int index = viewport.width * (viewport.height - y - 1) + x;
 				float current_depth = depth_buffer[index];
 				if (depth >= current_depth) {
@@ -547,12 +456,13 @@ void Graphics::draw_textured_slowly(const Triangle& triangle)
 				}
 				depth_buffer[index] = depth;
 
+				// Interpolate 1/w
 				float A = inv_w0 * alpha;
 				float B = inv_w1 * beta;
 				float C = inv_w2 * gamma;
 				float ABC = 1.0f / (A + B + C);
 
-				// Interpolate texture coordinates with 1/w
+				// Interpolate texture coordinates with interpolated 1/w
 				float u = uv0.u * A + uv1.u * B + uv2.u * C;
 				float v = uv0.v * A + uv1.v * B + uv2.v * C;
 

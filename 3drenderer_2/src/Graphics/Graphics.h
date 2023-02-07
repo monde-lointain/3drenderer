@@ -28,7 +28,6 @@ namespace Graphics
 	void draw_wireframe_3d(const Triangle& triangle, const uint32& color);
 	void draw_solid(const Triangle& triangle, const uint32& color);
 	void draw_textured(const Triangle& triangle);
-	void draw_textured_slowly(const Triangle& triangle);
 	void draw_vertices(const Triangle& triangle, int point_size, const uint32& color);
 	void draw_gizmo(const Gizmo& gizmo);
 	void close_window();

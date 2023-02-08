@@ -4,9 +4,9 @@
 #include "../Math/Math3D.h"
 #include "../Mesh/Mesh.h"
 #include "../Mesh/Triangle.h"
-#include "../Misc/Colors.h"
-#include "../Misc/debug_counters.h"
-#include "../Misc/debug_helpers.h"
+#include "../Utils/Colors.h"
+#include "../Utils/debug_counters.h"
+#include "../Utils/debug_helpers.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <SDL.h>
@@ -19,10 +19,11 @@ Renderer::Renderer()
 	is_running = false;
 	seconds_per_frame = 0.0f;
 	current_fps = 0.0f;
-	render_mode = TEXTURED;
+	render_mode = VERTICES_ONLY;
 	display_face_normals = false;
-	backface_culling = false;
-	camera.position = glm::vec3(0.0f, 0.0f, -2.0f);
+	backface_culling = true;
+	camera.position = glm::vec3(0.0f, 0.0f, 10.0f);
+	camera.direction = glm::vec3(0.0f, 0.0f, 0.0f);
 	projection_matrix = glm::mat4(0.0f);
 }
 
@@ -36,16 +37,18 @@ void Renderer::setup()
 	is_running = Graphics::initialize_window();
 	Graphics::initialize_framebuffer();
 
+	// Lock the mouse to the screen
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
 	// Setup the camera and projection matrix
-	camera.fov = 130.0f; 
+	camera.fov = 60.0f; 
 	camera.aspect = (float)Graphics::viewport.width / (float)Graphics::viewport.height;
-	camera.znear = 0.1f;
-	camera.zfar = 50.0f;
+	camera.znear = 0.01f;
+	camera.zfar = 100.0f;
 	projection_matrix = Math3D::create_projection_matrix(camera);
 
 	// Create the meshes in the scene
-	Mesh* mesh = create_mesh("assets/models/cube.obj");
-	mesh->load_texture("assets/models/checker.png");
+	Mesh* mesh = create_mesh("assets/models/robot/robot.obj");
 	meshes.push_back(mesh);
 }
 
@@ -57,8 +60,8 @@ void Renderer::process_input()
 	/**
 	 * Controls:
 	 * 1-7: Toggle render mode
-	 * Mouse x/y: Adjust camera pitch and yaw (TODO)
-	 * WASD: Move camera in the direction of the mouse
+	 * Mouse x/y: Adjust camera pitch and yaw
+	 * WS/DA/QE: Move camera in the direction of the forward/right/world up vectors
 	 * N: Toggle normals
 	 * B: Toggle backface culling
 	 * ESC: Quit
@@ -127,10 +130,87 @@ void Renderer::process_input()
 					backface_culling = !backface_culling;
 					break;
 				}
+				/*
+				 * Note: The camera controls are handled by ORing together
+				 * different flags on the move state bitmask, which allows us to
+				 * easily handle multiple keypresses at once by simply setting
+				 * and removing bits from the mask
+				 */
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					camera.set_move_state(FORWARD, true);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					camera.set_move_state(BACKWARD, true);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					camera.set_move_state(RIGHT, true);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					camera.set_move_state(LEFT, true);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_q)
+				{
+					camera.set_move_state(DOWN, true);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_e)
+				{
+					camera.set_move_state(UP, true);
+					break;
+				}
 				break;
+			}
+			case SDL_KEYUP:
+			{
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					camera.set_move_state(FORWARD, false);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					camera.set_move_state(BACKWARD, false);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					camera.set_move_state(RIGHT, false);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					camera.set_move_state(LEFT, false);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_q)
+				{
+					camera.set_move_state(DOWN, false);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_e)
+				{
+					camera.set_move_state(UP, false);
+					break;
+				}
 			}
 		}
 	}
+
+	// TODO: Update the camera rotation based on mouse movement here
+	camera.process_mouse_movement();
+	camera.update_camera_position();
+	//std::cout << "\033[1;1H";
+	//std::cout << "Camera position z: " << camera.position.z << "\n";
+	//std::cout << "Camera pitch: " << camera.rotation.pitch << "\n";
+	//std::cout << "Camera yaw: " << camera.rotation.yaw << "\n";
 	END_TIMED_BLOCK(Input)
 }
 
@@ -140,10 +220,10 @@ void Renderer::update()
 	for (Mesh* &mesh : meshes)
 	{
 		// Initialize the model in the center of the screen
-		glm::vec3 scale(1.f);
-		glm::vec3 rotation(x, x, x);
-		glm::vec3 translation(0.0f, 0.0f, 0.0f);
-		x += 0.1f;
+		glm::vec3 scale(0.3f);
+		glm::vec3 rotation(0.0f);
+		glm::vec3 translation(0.0f, -2.0f, 0.0f);
+		x += 0.5f;
 
 		// Create the world matrix for the model by concatenating rotation,
 		// scaling, and transformation matrices
@@ -151,8 +231,9 @@ void Renderer::update()
 			Math3D::create_world_matrix(scale, rotation, translation);
 
 		// Initialize the view matrix looking in the positive z direction
-		glm::mat4 view_matrix = glm::lookAt(camera.position,
-			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec3 target = camera.position + camera.direction;
+		glm::mat4 view_matrix = glm::lookAt(
+			camera.position, target, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// Concatenate the world and view matrices into the modelview matrix
 		glm::mat4 modelview_matrix = view_matrix * world_matrix;
@@ -167,7 +248,7 @@ void Renderer::update()
 void Renderer::render()
 {
 	BEGIN_TIMED_BLOCK(Render)
-	Graphics::clear_framebuffer(Colors::BLUE);
+	Graphics::clear_framebuffer(Colors::BLACK);
 	Graphics::clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -241,36 +322,25 @@ void Renderer::transform_triangles(Mesh* mesh, const glm::mat4& modelview_matrix
 {
 	for (const Triangle& triangle : mesh->triangles)
 	{
-		Triangle transformed_triangle;
+		// Initialize the new triangle
+		Triangle transformed_triangle = triangle;
 
-		// Set the values we're just transferring over
-		transformed_triangle.texcoords[0] = triangle.texcoords[0];
-		transformed_triangle.texcoords[1] = triangle.texcoords[1];
-		transformed_triangle.texcoords[2] = triangle.texcoords[2];
-		transformed_triangle.texture = triangle.texture;
-
-		// Setup the vertices for transformation
-		glm::vec4 vertices[3] = {
-			triangle.vertices[0],
-			triangle.vertices[1],
-			triangle.vertices[2]
-		};
-
-		// Multiply the vertices by the modelview matrix to get them ready for
-		// projection
-		for (glm::vec4& vertex : vertices)
+		// Transform the vertices by the model-view matrix
+		for (glm::vec4& vertex : transformed_triangle.vertices)
 		{
 			Math3D::transform_point(vertex, modelview_matrix);
 		}
 
-		// Set the vertices on the triangle to our new transformed vertices
-		transformed_triangle.vertices[0] = vertices[0];
-		transformed_triangle.vertices[1] = vertices[1];
-		transformed_triangle.vertices[2] = vertices[2];
+		// Rotate the vertex normals
+		for (glm::vec3& normal : transformed_triangle.normals)
+		{
+			Math3D::rotate_normal(normal, modelview_matrix);
+		}
 
 		// Compute the face normal of the triangle
 		compute_face_normal(transformed_triangle);
 
+		// Add the transformed triangle to the bin of triangles to be rendered
 		triangles_in_scene.push_back(transformed_triangle);
 	}
 }
@@ -359,8 +429,8 @@ void Renderer::render_triangles_in_scene()
 			}
 			case SOLID_WIREFRAME:
 			{
-				Graphics::draw_solid(triangle, Colors::BLACK);
-				Graphics::draw_wireframe_3d(triangle, Colors::WHITE);
+				Graphics::draw_solid(triangle, Colors::WHITE);
+				Graphics::draw_wireframe_3d(triangle, Colors::BLACK);
 				break;
 			}
 			case TEXTURED:
@@ -385,7 +455,7 @@ void Renderer::render_triangles_in_scene()
 				else
 				{
 					Graphics::draw_textured(triangle);
-					Graphics::draw_wireframe_3d(triangle, Colors::GREEN);
+					Graphics::draw_wireframe_3d(triangle, Colors::BLACK);
 				}
 				break;
 			}
@@ -396,44 +466,45 @@ void Renderer::render_triangles_in_scene()
 
 void Renderer::draw_face_normal(const Triangle& triangle)
 {
-	/* TODO: Redo this function */
+	// Compute the points in 3D space to draw the lines
+	float normal_length = 0.1f;
+	glm::vec4 a(triangle.vertices[0]);
+	glm::vec4 b(triangle.vertices[1]);
+	glm::vec4 c(triangle.vertices[2]);
+	glm::vec4 center = glm::vec4((a + b + c) / 3.0f);
+	glm::vec4 end = center;
+	end.x += (triangle.face_normal.x * normal_length);
+	end.y += (triangle.face_normal.y * normal_length);
+	end.z += (triangle.face_normal.z * normal_length);
 
-	//// Compute the points in 3D space to draw the lines
-	//float normal_length = 1.f;
-	//glm::vec3 a(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
-	//glm::vec3 b(triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[1].z);
-	//glm::vec3 c(triangle.vertices[2].x, triangle.vertices[2].y, triangle.vertices[2].z);
-	//glm::vec4 center = glm::vec4((a + b + c) / 3.0f, 1.0f);
-	//glm::vec4 end = center + (glm::vec4(triangle.face_normal * normal_length, 1.0f));
+	// TODO: Change to reflect the revised pipeline order
+	Math3D::project_point(center, projection_matrix, Graphics::viewport, camera);
+	Math3D::project_point(end, projection_matrix, Graphics::viewport, camera);
 
-	//// TODO: Change to reflect the revised pipeline order
-	//Math3D::project_point(center, projection_matrix, Graphics::viewport, camera);
-	//Math3D::project_point(end, projection_matrix, Graphics::viewport, camera);
-
-	//switch (render_mode)
-	//{
-	//	case VERTICES_ONLY:
-	//	case WIREFRAME:
-	//	case WIREFRAME_VERTICES:
-	//		Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
-	//			center.z, int(end.x), int(end.y), end.z, Colors::WHITE);
-	//		break;
-	//	case SOLID:
-	//	case SOLID_WIREFRAME:
-	//		Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
-	//			center.z, int(end.x), int(end.y), end.z, Colors::GREEN);
-	//		break;
-	//}
+	switch (render_mode)
+	{
+		case VERTICES_ONLY:
+		case WIREFRAME:
+		case WIREFRAME_VERTICES:
+			Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
+				center.z, int(end.x), int(end.y), end.z, Colors::WHITE);
+			break;
+		case SOLID:
+		case SOLID_WIREFRAME:
+		case TEXTURED:
+		case TEXTURED_WIREFRAME:
+			Graphics::draw_line_bresenham_3d(int(center.x), int(center.y),
+				center.z, int(end.x), int(end.y), end.z, Colors::GREEN);
+			break;
+	}
 }
 
 void Renderer::compute_face_normal(Triangle& transformed_triangle)
 {
-	/* TODO: Redo this function */
-
-	//glm::vec3 ab = glm::vec3(transformed_triangle.vertices[1] - transformed_triangle.vertices[0]);
-	//glm::vec3 ca = glm::vec3(transformed_triangle.vertices[2] - transformed_triangle.vertices[0]);
-	//glm::vec3 face_normal = glm::normalize(glm::cross(ab, ca));
-	//transformed_triangle.face_normal = face_normal;
+	glm::vec3 ab = glm::vec3(transformed_triangle.vertices[1] - transformed_triangle.vertices[0]);
+	glm::vec3 ca = glm::vec3(transformed_triangle.vertices[2] - transformed_triangle.vertices[0]);
+	glm::vec3 face_normal = glm::normalize(glm::cross(ab, ca));
+	transformed_triangle.face_normal = face_normal;
 }
 
 void Renderer::set_render_mode(ERenderMode mode)

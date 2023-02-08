@@ -33,6 +33,14 @@ void Math3D::transform_point(glm::vec4& point, const glm::mat4& modelview_matrix
 	point = glm::vec4(modelview_matrix * point);
 }
 
+void Math3D::rotate_normal(glm::vec3& normal, const glm::mat4& modelview_matrix)
+{
+	// Transform the normals by the inverse-transpose of the model-view matrix
+	glm::mat3 inverse = glm::inverse(glm::mat3(modelview_matrix));
+	glm::mat3 normal_matrix = glm::transpose(inverse);
+	normal = glm::vec3(normal_matrix * normal);
+}
+
 void Math3D::project(glm::vec4& point, const glm::mat4& projection_matrix)
 {
 	point = glm::vec4(projection_matrix * point);

@@ -1,16 +1,11 @@
 #pragma once
 
-#include "../Misc/3d_types.h"
-#include <SDL_image.h>
+#include "../Utils/3d_types.h"
+#include <memory>
 
 struct Texture
 {
-public:
-	uint32* pixels = nullptr;
+	std::unique_ptr<uint32[]> pixels;
 	int width;
 	int height;
-
-	void destroy();
-
-	SDL_Surface* surface = nullptr;
 };

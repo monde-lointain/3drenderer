@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 #include "Gizmo.h"
-#include "../Misc/3d_types.h"
+#include "../Utils/3d_types.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <vector>

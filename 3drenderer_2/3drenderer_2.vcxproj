@@ -376,12 +376,13 @@
     <ClCompile Include="src\Mesh\Mesh.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Misc\debug_helpers.cpp" />
+    <ClCompile Include="src\Utils\debug_helpers.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Viewport.cpp" />
     <ClCompile Include="src\Mesh\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Math\Rotator.h" />
     <ClInclude Include="src\Misc\3d_algorithm.h" />
     <ClInclude Include="src\Math\3d_vector.h" />
     <ClInclude Include="src\Renderer\Gizmo.h" />
@@ -632,14 +633,15 @@
     <ClInclude Include="libs\glm\vec4.hpp" />
     <ClInclude Include="libs\glm\vector_relational.hpp" />
     <ClInclude Include="src\Graphics\Graphics.h" />
-    <ClInclude Include="src\Misc\3d_types.h" />
-    <ClInclude Include="src\Misc\Colors.h" />
-    <ClInclude Include="src\Misc\debug_counters.h" />
-    <ClInclude Include="src\Misc\debug_helpers.h" />
+    <ClInclude Include="src\Utils\3d_types.h" />
+    <ClInclude Include="src\Utils\Colors.h" />
+    <ClInclude Include="src\Utils\debug_counters.h" />
+    <ClInclude Include="src\Utils\debug_helpers.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Renderer\Viewport.h" />
     <ClInclude Include="src\Mesh\tex2.h" />
     <ClInclude Include="src\Mesh\Texture.h" />
+    <ClInclude Include="src\Utils\SurfaceDeleter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\glm\detail\func_common.inl" />

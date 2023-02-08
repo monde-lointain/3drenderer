@@ -2,9 +2,10 @@
 
 #define FAST_OBJ_IMPLEMENTATION
 #include "Triangle.h"
-#include "../Misc/Colors.h"
-#include "../Misc/debug_helpers.h"
+#include "../Utils/Colors.h"
+#include "../Utils/debug_helpers.h"
 #include <fast_obj.h>
+#include <SDL_image.h>
 #include <iostream>
 
 Mesh::Mesh()
@@ -12,16 +13,6 @@ Mesh::Mesh()
 	rotation = glm::vec3(0.0f);
 	scale = glm::vec3(1.0f);
 	translation = glm::vec3(0.0f);
-	texture = new Texture;
-}
-
-Mesh::~Mesh()
-{
-	if (texture)
-	{
-		texture->destroy();
-		delete texture;
-	}
 }
 
 void Mesh::load_from_obj(const char* filename)
@@ -34,21 +25,37 @@ void Mesh::load_from_obj(const char* filename)
 		return;
 	}
 
-	// Find how many groups of faces there are in the mesh
-	for (uint32 i = 0; i < fast_mesh->group_count; i++)
+	// Allocate memory for the texture pointer array
+	int num_materials = fast_mesh->material_count;
+	textures.resize(num_materials * sizeof(Texture*));
+
+	// For each mesh
+	for (uint32 i = 0; i < fast_mesh->object_count; i++)
 	{
-		fastObjGroup group = fast_mesh->groups[i];
+		fastObjGroup object = fast_mesh->objects[i];
 		int idx = 0;
 
-		// Get the vertex, normal and texture coordinate information for each
-		// triangle
-		for (uint32 j = 0; j < group.face_count; j++)
+		// For each triangle
+		for (uint32 j = 0; j < object.face_count; j++)
 		{
 			Triangle triangle;
 
+			// Load the texture from the material.
+			int material_index = fast_mesh->face_materials[object.face_offset + j];
+
+			// Only load if the texture is not already loaded
+			if (!textures[material_index])
+			{
+				char* material_filename = fast_mesh->materials[material_index].map_Kd.path;
+				std::shared_ptr<Texture> texture = load_texture(material_filename);
+				textures[material_index] = texture;
+			}
+
+			triangle.texture = textures[material_index];
+
 			for (uint32 k = 0; k < 3; k++)
 			{
-				fastObjIndex index = fast_mesh->indices[group.index_offset + idx];
+				fastObjIndex index = fast_mesh->indices[object.index_offset + idx];
 
 				triangle.vertices[k] = glm::vec4(
 					fast_mesh->positions[3 * index.p + 0],
@@ -60,11 +67,10 @@ void Mesh::load_from_obj(const char* filename)
 					fast_mesh->texcoords[2 * index.t + 0],
 					fast_mesh->texcoords[2 * index.t + 1]
 				};
-				triangle.normals[k] = glm::vec4(
+				triangle.normals[k] = glm::vec3(
 					fast_mesh->normals[3 * index.n + 0],
 					fast_mesh->normals[3 * index.n + 1],
-					fast_mesh->normals[3 * index.n + 2],
-					1.0f
+					fast_mesh->normals[3 * index.n + 2]
 				);
 
 				idx++;
@@ -75,38 +81,37 @@ void Mesh::load_from_obj(const char* filename)
 		}
 	}
 
+	std::cout << "Loaded " << filename << "\n";
+
 	// Destroy the fastobj mesh once we've imported it
 	fast_obj_destroy(fast_mesh);
 }
 
-void Mesh::load_texture(const char* filename)
+std::shared_ptr<Texture> Mesh::load_texture(const char* filename)
 {
-	texture->surface = IMG_Load(filename);
+	// Allocate the Texture object
+	std::shared_ptr<Texture> texture = std::make_unique<Texture>();
 
-	if (!texture->surface) {
+	// Load the image using SDL_image
+	SDL_Surface* surface = IMG_Load(filename);
+
+	if (!surface)
+	{
 		std::cerr << "Failed to load " << filename << ".\n";
-		set_texture_on_triangles(nullptr);
-		return;
+		return nullptr;
 	}
 
 	// Convert to the pixel format of the renderer
-	texture->surface =
-		SDL_ConvertSurfaceFormat(texture->surface, SDL_PIXELFORMAT_BGRA8888, 0);
+	surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_BGRA8888, 0);
 
-	texture->width = texture->surface->w;
-	texture->height = texture->surface->h;
-	texture->pixels = (uint32*)texture->surface->pixels;
+	texture->width = surface->w;
+	texture->height = surface->h;
+	texture->pixels = std::unique_ptr<uint32[]>(new uint32[surface->w * surface->h]);
+	memcpy(texture->pixels.get(), surface->pixels, surface->w * surface->h * sizeof(uint32));
 
-	// NOTE: ugly
-	set_texture_on_triangles(texture);
-}
+	SDL_FreeSurface(surface);
 
-void Mesh::set_texture_on_triangles(Texture* texture_to_set)
-{
-	for (Triangle& triangle : triangles)
-	{
-		triangle.texture = texture_to_set;
-	}
+	return texture;
 }
 
 void Mesh::rotate(float x, float y, float z)

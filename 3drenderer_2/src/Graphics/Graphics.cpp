@@ -4,16 +4,16 @@
 #include "../Math/Math3D.h"
 #include "../Mesh/Texture.h"
 #include "../Mesh/Triangle.h"
-#include "../Misc/Colors.h"
-#include "../Misc/debug_helpers.h"
+#include "../Utils/Colors.h"
+#include "../Utils/debug_helpers.h"
 #include "../Renderer/Gizmo.h"
 #include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
 #include <SDL.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <memory>
 
 static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
@@ -118,7 +118,7 @@ void Graphics::clear_z_buffer()
 	int size = viewport.width * viewport.height;
 	int loop_count = size / 8;
 
-	const float MAX = std::numeric_limits<float>::max();
+	constexpr float MAX = std::numeric_limits<float>::max();
 	// Set up a register with 8 float values set to the max possible value for a
 	// float. We'll only render pixels if they are in front (less) of this value
 	__m256 max = _mm256_set1_ps(MAX);
@@ -311,6 +311,86 @@ void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
 	}
 }
 
+void Graphics::draw_line_bresenham_3d_no_zfight(const int& x1, const int& y1,
+	const float& z1, const glm::vec3& n1, const int& x2, const int& y2,
+	const float& z2, const glm::vec3& n2, const uint32& color)
+{
+	int dx = abs(x2 - x1);
+	int dy = abs(y2 - y1);
+
+	// Determine the step direction for x and y
+	int x_inc = x1 < x2 ? 1 : -1;
+	int y_inc = y1 < y2 ? 1 : -1;
+
+	int error = dx - dy;
+	int e2 = 2 * error;
+
+	int current_x = x1;
+	int current_y = y1;
+	float depth = z1;
+	glm::vec3 normal = n1;
+
+	// For depth/normal interpolation
+	float line_len =
+		sqrtf((float)((x2 - x1) * (x2 - x1)) + (float)((y2 - y1) * (y2 - y1)));
+	float dz = z2 - z1;
+	glm::vec3 dn = n2 - n1;
+
+	// Loop until the line is drawn
+	while (true)
+	{
+		// Calculate the index into the z-buffer for this pixel
+		int index = viewport.width * (viewport.height - current_y - 1) + current_x;
+
+		// Check if the pixel is within the bounds of the screen
+		if (current_x >= 0 && current_x < viewport.width &&
+			current_y >= 0 && current_y < viewport.height)
+		{
+			// Is there a faster way to do this?
+			float curr_len =
+				sqrtf((float)((current_x - x1) * (current_x - x1))
+					+ (float)((current_y - y1) * (current_y - y1)));
+			float pct = curr_len / line_len;
+			depth = z1 + (dz * pct);
+
+			// Interpolate the normals
+			normal = n1 + (dn * pct);
+
+			// Push the z value away from the mesh a little bit in the opposite
+			// direction of its transformed normal vector
+			float offset_factor = 0.00001f;
+			depth -= (normal.z * offset_factor);
+
+			// Perform a depth check using the z-buffer
+			if (depth <= depth_buffer[index])
+			{
+				// Render the pixel
+				depth_buffer[index] = depth;
+				draw_pixel(current_x, current_y, color);
+			}
+		}
+
+		// Stop once both endpoints have been drawn
+		if (current_x == x2 && current_y == y2)
+		{
+			break;
+		}
+
+		e2 = 2 * error;
+		// Update the error value
+		if (e2 > -dy)
+		{
+			current_x += x_inc;
+			error -= dy;
+		}
+		if (e2 < dx)
+		{
+			current_y += y_inc;
+			error += dx;
+		}
+	}
+}
+
 void Graphics::draw_wireframe(const Triangle& triangle, const uint32& color)
 {
 	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
@@ -329,9 +409,12 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 	float za = triangle.vertices[0].z;
 	float zb = triangle.vertices[1].z;
 	float zc = triangle.vertices[2].z;
-	draw_line_bresenham_3d(a.x, a.y, za, b.x, b.y, zb, color);
-	draw_line_bresenham_3d(b.x, b.y, zb, c.x, c.y, zc, color);
-	draw_line_bresenham_3d(c.x, c.y, zc, a.x, a.y, za, color);
+	glm::vec3 na = triangle.normals[0];
+	glm::vec3 nb = triangle.normals[1];
+	glm::vec3 nc = triangle.normals[1];
+	draw_line_bresenham_3d_no_zfight(a.x, a.y, za, na, b.x, b.y, zb, nb, color);
+	draw_line_bresenham_3d_no_zfight(b.x, b.y, zb, nb, c.x, c.y, zc, nc, color);
+	draw_line_bresenham_3d_no_zfight(c.x, c.y, zc, nc, a.x, a.y, za, na, color);
 }
 
 void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
@@ -363,8 +446,8 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 	// Loop over the bounding box and rasterize the triangle
 	for (int x = min_x; x <= max_x; x++) {
 		for (int y = min_y; y <= max_y; y++) {
-			p.x = (float)x + 0.5f;
-			p.y = (float)y + 0.5f;
+			p.x = (float)x;
+			p.y = (float)y;
 
 			// Compute barycentric weights
 			float alpha = Math3D::orient2d_f(v1, v2, p);
@@ -380,7 +463,8 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 				// Interpolate depth values
 				float depth = v0z * alpha + v1z * beta + v2z * gamma;
 
-				// Check depth against z-buffer and only render if the pixel is in front
+				// Check depth against z-buffer and only render if the pixel is
+				// behind (front to back)
 				int index = viewport.width * (viewport.height - y - 1) + x;
 				float current_depth = depth_buffer[index];
 				if (depth >= current_depth) {
@@ -389,7 +473,7 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 				depth_buffer[index] = depth;
 
 				// Set pixel color
-				draw_pixel(int(p.x), int(p.y), color);
+				draw_pixel(x, y, color);
 			}
 		}
 	}
@@ -409,7 +493,7 @@ void Graphics::draw_textured(const Triangle& triangle)
 	float inv_w0 = triangle.inv_w[0];
 	float inv_w1 = triangle.inv_w[1];
 	float inv_w2 = triangle.inv_w[2];
-	Texture* texture = triangle.texture;
+	std::shared_ptr<Texture> texture = triangle.texture;
 
 	// Calculate triangle bounding box
 	int min_x = std::min({ int(v0.x), int(v1.x), int(v2.x) });
@@ -448,7 +532,8 @@ void Graphics::draw_textured(const Triangle& triangle)
 				// Interpolate depth values
 				float depth = v0z * alpha + v1z * beta + v2z * gamma;
 
-				// Check depth against z-buffer and only render if the pixel is in front
+				// Check depth against z-buffer and only render if the pixel is
+				// behind (front to back)
 				int index = viewport.width * (viewport.height - y - 1) + x;
 				float current_depth = depth_buffer[index];
 				if (depth >= current_depth) {
@@ -471,10 +556,10 @@ void Graphics::draw_textured(const Triangle& triangle)
 				v *= ABC;
 
 				// Look up texel value and set pixel color
-				int tex_x = abs(int(u * (float)texture->width)) % texture->width;
-				int tex_y = abs(int(v * (float)texture->height)) % texture->height;
+				int tex_x = abs(int(u * (float)texture->width + 0.5f)) % texture->width;
+				int tex_y = abs(int(v * (float)texture->height + 0.5f)) % texture->height;
 				int tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
-				draw_pixel(int(p.x), int(p.y), texture->pixels[tex_index]);
+				draw_pixel(x, y, texture->pixels[tex_index]);
 			}
 		}
 	}
@@ -483,11 +568,11 @@ void Graphics::draw_textured(const Triangle& triangle)
 void Graphics::draw_vertices(
 	const Triangle& triangle, int point_size, const uint32& color)
 {
-	int offset = point_size / 2;
+	float offset = point_size * 0.5f;
 	for (glm::vec4 vertex : triangle.vertices)
 	{
-		int x_pos = (int)vertex.x - offset;
-		int y_pos = (int)vertex.y - offset;
+		int x_pos = int(vertex.x - offset + 0.5f);
+		int y_pos = int(vertex.y - offset + 0.5f);
 		Graphics::draw_rect(x_pos, y_pos, point_size, point_size, color);
 	}
 }

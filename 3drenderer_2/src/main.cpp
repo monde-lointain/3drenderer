@@ -13,7 +13,7 @@ int main(int argc, char* args[])
 
 	// Set this to the allocation number given by the leak checker to break at
 	// it
-	_CrtSetBreakAlloc(101);
+	_CrtSetBreakAlloc(105);
 
 	// Need to put braces here to contain the scope!
 	{

@@ -16,6 +16,7 @@ namespace Math3D
 		glm::vec3 rotation = glm::vec3(0.0f),
 		glm::vec3 translation = glm::vec3(0.0f));
 	void transform_point(glm::vec4& point, const glm::mat4& modelview_matrix);
+	void rotate_normal(glm::vec3& normal, const glm::mat4& modelview_matrix);
 	void project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 		const Viewport& viewport, const Camera& camera);
 	void project(glm::vec4& point, const glm::mat4& projection_matrix);

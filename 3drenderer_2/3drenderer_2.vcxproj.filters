@@ -33,7 +33,7 @@
     <ClCompile Include="src\Mesh\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Misc\debug_helpers.cpp">
+    <ClCompile Include="src\Utils\debug_helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Renderer\Camera.cpp">
@@ -53,13 +53,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Misc\3d_types.h">
+    <ClInclude Include="src\Utils\3d_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Misc\Colors.h">
+    <ClInclude Include="src\Utils\Colors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Graphics.h">
@@ -68,7 +68,7 @@
     <ClInclude Include="src\Renderer\Viewport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Misc\debug_counters.h">
+    <ClInclude Include="src\Utils\debug_counters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="libs\glm\detail\_features.hpp">
@@ -800,7 +800,7 @@
     <ClInclude Include="src\Mesh\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Misc\debug_helpers.h">
+    <ClInclude Include="src\Utils\debug_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Camera.h">
@@ -825,6 +825,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Mesh\Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utils\SurfaceDeleter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Math\Rotator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

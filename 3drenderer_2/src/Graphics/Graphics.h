@@ -5,15 +5,21 @@
 #include <glm/vec3.hpp>
 
 struct Gizmo;
+union SDL_Event;
 struct Triangle;
 
 namespace Graphics
 {
 	bool initialize_window();
+	void window_clicked(SDL_Event &event);
+	void window_released();
+	void drag_window(SDL_Event& event);
 	void initialize_framebuffer();
 	void clear_framebuffer(uint32 color);
 	void clear_z_buffer();
 	void update_framebuffer();
+	void gui_process_input(SDL_Event& Event);
+	void render_gui();
 	void render_frame();
 	void draw_pixel(const int& x, const int& y, const uint32& color);
 	void draw_rect(const int& x, const int& y, const int& width,
@@ -39,3 +45,5 @@ namespace Graphics
 
 	extern Viewport viewport;
 };
+
+

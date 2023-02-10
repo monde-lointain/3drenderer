@@ -15,6 +15,15 @@ enum EMovementState
 	DOWN       = 1 << 5,
 };
 
+// Bitmask for controlling which types of inputs are allowed
+enum EInputMode
+{
+	INPUT_ENABLED           = 0,
+	MOUSE_INPUT_DISABLED    = 1 << 0,
+	KEYBOARD_INPUT_DISABLED = 1 << 1,
+	INPUT_DISABLED          = MOUSE_INPUT_DISABLED | KEYBOARD_INPUT_DISABLED
+};
+
 typedef int MovementState;
 
 struct Camera
@@ -22,9 +31,11 @@ struct Camera
 	Camera();
 	~Camera() = default;
 
+	void update();
+
 	void process_mouse_movement();
 	void update_camera_vectors();
-	void update_camera_position();
+	void update_position();
 
 	glm::vec3 position;
 	glm::vec3 direction;
@@ -40,6 +51,7 @@ struct Camera
 	float mouse_sensitivity;
 	MovementState move_state;
 	glm::vec3 move_direction;
+	EInputMode input_mode;
 
 	void set_move_state(EMovementState state, bool set);
 };

@@ -20,7 +20,7 @@ namespace Math3D
 	void project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 		const Viewport& viewport, const Camera& camera);
 	void project(glm::vec4& point, const glm::mat4& projection_matrix);
-	void to_ndc(glm::vec4& point, const float& one_over_w);
+	void to_ndc(glm::vec4& point, float& one_over_w);
 	void to_screen_space(
 		glm::vec4& point, const Viewport& viewport, const Camera& camera);
 	int orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c);

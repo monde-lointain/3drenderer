@@ -368,6 +368,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="libs\imgui\imgui.cpp" />
+    <ClCompile Include="libs\imgui\imgui_demo.cpp" />
+    <ClCompile Include="libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="libs\imgui\imgui_impl_sdl.cpp" />
+    <ClCompile Include="libs\imgui\imgui_impl_sdlrenderer.cpp" />
+    <ClCompile Include="libs\imgui\imgui_tables.cpp" />
+    <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\Graphics\GUI.cpp" />
+    <ClCompile Include="src\Logger\Logger.cpp" />
+    <ClCompile Include="src\Clipping\Clipper.cpp" />
+    <ClCompile Include="src\Math\Rotator.cpp" />
     <ClCompile Include="src\Mesh\Triangle.cpp" />
     <ClCompile Include="src\Renderer\Gizmo.cpp" />
     <ClCompile Include="src\Math\Math3D.cpp" />
@@ -379,9 +390,20 @@
     <ClCompile Include="src\Utils\debug_helpers.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Viewport.cpp" />
-    <ClCompile Include="src\Mesh\Texture.cpp" />
+    <ClCompile Include="src\Utils\string_ops.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="libs\imgui\imconfig.h" />
+    <ClInclude Include="libs\imgui\imgui.h" />
+    <ClInclude Include="libs\imgui\imgui_impl_sdl.h" />
+    <ClInclude Include="libs\imgui\imgui_impl_sdlrenderer.h" />
+    <ClInclude Include="libs\imgui\imgui_internal.h" />
+    <ClInclude Include="libs\imgui\imstb_rectpack.h" />
+    <ClInclude Include="libs\imgui\imstb_textedit.h" />
+    <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Graphics\GUI.h" />
+    <ClInclude Include="src\Logger\Logger.h" />
+    <ClInclude Include="src\Clipping\Clipper.h" />
     <ClInclude Include="src\Math\Rotator.h" />
     <ClInclude Include="src\Misc\3d_algorithm.h" />
     <ClInclude Include="src\Math\3d_vector.h" />
@@ -641,7 +663,8 @@
     <ClInclude Include="src\Renderer\Viewport.h" />
     <ClInclude Include="src\Mesh\tex2.h" />
     <ClInclude Include="src\Mesh\Texture.h" />
-    <ClInclude Include="src\Utils\SurfaceDeleter.h" />
+    <ClInclude Include="src\Utils\math_helpers.h" />
+    <ClInclude Include="src\Utils\string_ops.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\glm\detail\func_common.inl" />

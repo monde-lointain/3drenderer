@@ -1,5 +1,6 @@
 #include "Graphics.h"
 
+#include "GUI.h"
 #include "../Math/3d_vector.h"
 #include "../Math/Math3D.h"
 #include "../Mesh/Texture.h"
@@ -18,17 +19,24 @@
 static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 
-Viewport Graphics::viewport = { 1280, 720, "3D Renderer" };
+Viewport Graphics::viewport = { 800, 600, "3D Renderer" };
+
+std::unique_ptr<GUI> gui = std::make_unique<GUI>();
 
 static uint32* framebuffer = nullptr;
 static SDL_Texture* framebuffer_texture = nullptr;
 
 static float* depth_buffer = nullptr;
 
+int window_x;
+int window_y;
+int mouse_x;
+int mouse_y;
+bool is_dragging = false;
+
 bool Graphics::initialize_window()
 {
-	viewport = { 1280, 720, "3D Renderer" };
-
+	// Initialize SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -38,6 +46,7 @@ bool Graphics::initialize_window()
 		return false;
 	}
 
+	// Create the window
 	window = SDL_CreateWindow(viewport.name.c_str(),
 		                      SDL_WINDOWPOS_CENTERED,
 		                      SDL_WINDOWPOS_CENTERED,
@@ -54,6 +63,7 @@ bool Graphics::initialize_window()
 		return false;
 	}
 
+	// Create the SDL renderer
 	renderer = SDL_CreateRenderer(window,
 		                          -1,
 		                          SDL_RENDERER_ACCELERATED |
@@ -69,7 +79,41 @@ bool Graphics::initialize_window()
 		return false;
 	}
 
+	// Create the GUI
+	if (!gui->init(window, renderer))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, 
+			                     viewport.name.c_str(),
+			                     "Error initializing ImGui with SDL renderer.", 
+			                     nullptr);
+		return false;
+	}
+
 	return true;
+}
+
+void Graphics::window_clicked(SDL_Event& event)
+{
+	//SDL_SetRelativeMouseMode(SDL_TRUE);
+	//SDL_GetWindowPosition(window, &window_x, &window_y);
+	//mouse_x = event.button.x;
+	//mouse_y = event.button.y;
+	//is_dragging = true;
+}
+
+void Graphics::window_released()
+{
+	//SDL_SetRelativeMouseMode(SDL_FALSE);
+	//is_dragging = false;
+}
+
+void Graphics::drag_window(SDL_Event& event)
+{
+	//if (is_dragging) {
+	//	int new_x = window_x + event.motion.x - mouse_x;
+	//	int new_y = window_y + event.motion.y - mouse_y;
+	//	SDL_SetWindowPosition(window, new_x, new_y);
+	//}
 }
 
 void Graphics::initialize_framebuffer()
@@ -144,6 +188,16 @@ void Graphics::update_framebuffer()
 		viewport.width * sizeof(uint32));
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, framebuffer_texture, nullptr, nullptr);
+}
+
+void Graphics::gui_process_input(SDL_Event& event)
+{
+	gui->process_input(event);
+}
+
+void Graphics::render_gui()
+{
+	gui->render();
 }
 
 void Graphics::render_frame()
@@ -556,8 +610,8 @@ void Graphics::draw_textured(const Triangle& triangle)
 				v *= ABC;
 
 				// Look up texel value and set pixel color
-				int tex_x = abs(int(u * (float)texture->width + 0.5f)) % texture->width;
-				int tex_y = abs(int(v * (float)texture->height + 0.5f)) % texture->height;
+				int tex_x = abs(int(u * (float)texture->width)) % texture->width;
+				int tex_y = abs(int(v * (float)texture->height)) % texture->height;
 				int tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
 				draw_pixel(x, y, texture->pixels[tex_index]);
 			}
@@ -605,6 +659,8 @@ void Graphics::close_window()
 	delete[] framebuffer;
 	delete[] depth_buffer;
 	SDL_DestroyTexture(framebuffer_texture);
+	// Close imgui
+	gui->destroy();
 	// Close SDL
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);

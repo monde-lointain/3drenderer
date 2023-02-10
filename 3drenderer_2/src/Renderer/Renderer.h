@@ -2,12 +2,12 @@
 
 #include "Camera.h"
 #include "Gizmo.h"
+#include "../Clipping/Clipper.h"
 #include "../Utils/3d_types.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <vector>
 
-struct Gizmo;
 struct Mesh;
 struct Triangle;
 
@@ -48,14 +48,16 @@ struct Renderer
 
 	Camera camera;
 	glm::mat4 projection_matrix;
+	glm::mat4 view_matrix;
 	/** The x axis of the gizmo is drawn in yellow. The y axis is magenta, and the z axis cyan. */
 	Gizmo gizmo;
 	std::vector<Mesh*> meshes;
 	std::vector<Triangle> triangles_in_scene;
+	Clipper clipper;
 
 	void transform_triangles(Mesh* mesh, const glm::mat4& modelview_matrix);
 	void transform_gizmo(const glm::mat4& modelview_matrix);
-	void project_triangle(Triangle& triangle);
+	bool project_triangle(Triangle& triangle);
 	void project_gizmo();
 	void render_triangles_in_scene();
 	void draw_face_normal(const Triangle& triangle);

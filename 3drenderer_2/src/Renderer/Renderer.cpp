@@ -1,12 +1,15 @@
 #include "Renderer.h"
 
 #include "../Graphics/Graphics.h"
+#include "../Logger/Logger.h"
 #include "../Math/Math3D.h"
 #include "../Mesh/Mesh.h"
 #include "../Mesh/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/debug_counters.h"
 #include "../Utils/debug_helpers.h"
+#include "../Utils/math_helpers.h"
+#include "../Utils/string_ops.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <SDL.h>
@@ -19,11 +22,12 @@ Renderer::Renderer()
 	is_running = false;
 	seconds_per_frame = 0.0f;
 	current_fps = 0.0f;
-	render_mode = VERTICES_ONLY;
+	render_mode = WIREFRAME;
 	display_face_normals = false;
-	backface_culling = true;
-	camera.position = glm::vec3(0.0f, 0.0f, 10.0f);
+	backface_culling = false;
+	camera.position = glm::vec3(0.0f, 0.0f, 4.0f);
 	camera.direction = glm::vec3(0.0f, 0.0f, 0.0f);
+	camera.update();
 	projection_matrix = glm::mat4(0.0f);
 }
 
@@ -38,17 +42,26 @@ void Renderer::setup()
 	Graphics::initialize_framebuffer();
 
 	// Lock the mouse to the screen
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_SetRelativeMouseMode(SDL_FALSE);
 
-	// Setup the camera and projection matrix
+	// Initialize the camera
 	camera.fov = 60.0f; 
 	camera.aspect = (float)Graphics::viewport.width / (float)Graphics::viewport.height;
-	camera.znear = 0.01f;
-	camera.zfar = 100.0f;
+	camera.znear = 0.1f;
+	camera.zfar = 10.0f;
+
+	// Create the projection matrix
 	projection_matrix = Math3D::create_projection_matrix(camera);
 
+	// Create the view matrix
+	glm::vec3 target = camera.position + camera.direction;
+	view_matrix = glm::lookAt(camera.position, target, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	// Create the six frustum planes
+	clipper.create_frustum_planes(projection_matrix, view_matrix);
+
 	// Create the meshes in the scene
-	Mesh* mesh = create_mesh("assets/models/robot/robot.obj");
+	Mesh* mesh = create_mesh("assets/models/cube/cubetest.obj");
 	meshes.push_back(mesh);
 }
 
@@ -66,16 +79,43 @@ void Renderer::process_input()
 	 * B: Toggle backface culling
 	 * ESC: Quit
 	 */
+
 	while (SDL_PollEvent(&event))
 	{
-		// Handling core SDL events (keyboard movement, closing the window etc.)
+		// Imgui SDL input handling
+		Graphics::gui_process_input(event);
+
 		switch (event.type)
 		{
+			// Closing the window
 			case SDL_QUIT:
 			{
 				is_running = false;
 				break;
 			}
+			// Moving the window
+			case SDL_MOUSEBUTTONDOWN:
+			{
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					Graphics::window_clicked(event);
+					break;
+				}
+				break;
+			}
+			case SDL_MOUSEBUTTONUP:
+			{
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					Graphics::window_released();
+					break;
+				}
+				break;
+			}
+			case SDL_MOUSEMOTION:
+			{
+				Graphics::drag_window(event);
+				break;
+			}
+			// Keyboard controls
 			case SDL_KEYDOWN:
 			{
 				if (event.key.keysym.sym == SDLK_ESCAPE)
@@ -203,37 +243,34 @@ void Renderer::process_input()
 			}
 		}
 	}
-
-	// TODO: Update the camera rotation based on mouse movement here
-	camera.process_mouse_movement();
-	camera.update_camera_position();
-	//std::cout << "\033[1;1H";
-	//std::cout << "Camera position z: " << camera.position.z << "\n";
-	//std::cout << "Camera pitch: " << camera.rotation.pitch << "\n";
-	//std::cout << "Camera yaw: " << camera.rotation.yaw << "\n";
 	END_TIMED_BLOCK(Input)
 }
 
 void Renderer::update()
 {
 	BEGIN_TIMED_BLOCK(Update)
+	// Update the position and rotation of the camera
+	camera.update();
+
+	// Update the view matrix
+	glm::vec3 target = camera.position + camera.direction;
+	view_matrix = glm::lookAt(camera.position, target, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	//// Update the six frustum planes
+	//clipper.create_frustum_planes(projection_matrix, view_matrix);
+
 	for (Mesh* &mesh : meshes)
 	{
 		// Initialize the model in the center of the screen
-		glm::vec3 scale(0.3f);
+		glm::vec3 scale(1.0f);
 		glm::vec3 rotation(0.0f);
-		glm::vec3 translation(0.0f, -2.0f, 0.0f);
+		glm::vec3 translation(0.0f, 0.0f, 0.0f);
 		x += 0.5f;
 
 		// Create the world matrix for the model by concatenating rotation,
 		// scaling, and transformation matrices
 		glm::mat4 world_matrix =
 			Math3D::create_world_matrix(scale, rotation, translation);
-
-		// Initialize the view matrix looking in the positive z direction
-		glm::vec3 target = camera.position + camera.direction;
-		glm::mat4 view_matrix = glm::lookAt(
-			camera.position, target, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// Concatenate the world and view matrices into the modelview matrix
 		glm::mat4 modelview_matrix = view_matrix * world_matrix;
@@ -248,7 +285,7 @@ void Renderer::update()
 void Renderer::render()
 {
 	BEGIN_TIMED_BLOCK(Render)
-	Graphics::clear_framebuffer(Colors::BLACK);
+	Graphics::clear_framebuffer(Colors::BLUE);
 	Graphics::clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -264,6 +301,8 @@ void Renderer::render()
 	gizmo.reset();
 
 	Graphics::update_framebuffer();
+
+	Graphics::render_gui();
 	Graphics::render_frame();
 	END_TIMED_BLOCK(Render)
 }
@@ -356,20 +395,51 @@ void Renderer::transform_gizmo(const glm::mat4& modelview_matrix)
 }
 
 // TODO: This should really be in Math3D I think
-void Renderer::project_triangle(Triangle& triangle)
+bool Renderer::project_triangle(Triangle& triangle)
 {
+	Logger::print(LOG_CATEGORY_CLIPPING, "Clip space coords:");
 	int num_vertices = 3;
 	for (int i = 0; i < num_vertices; i++)
 	{
 		// Transform the point from camera space to clip space
 		Math3D::project(triangle.vertices[i], projection_matrix);
+		Logger::print(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[i]));
+	}
+
+	//// Check to see if the triangle is outside the six frustum planes
+	//if (clipper.cull_against_frustum_planes(triangle))
+	//{
+	//	return true;
+	//}
+	if (clipper.cull_ndc(triangle))
+	{
+		return true;
+	}
+
+	// Logging
+	Logger::print(LOG_CATEGORY_CLIPPING, "NDC coords:");
+	for (int i = 0; i < num_vertices; i++)
+	{
 		// Store 1/w for later use
-		triangle.inv_w[i] = 1.0f / triangle.vertices[i].w;
+		triangle.inv_w[i] = is_close_to_zero(triangle.vertices[i].w) ? 1.0f : 1.0f / triangle.vertices[i].w;
+
 		// Perform perspective divide
 		Math3D::to_ndc(triangle.vertices[i], triangle.inv_w[i]);
+		Logger::print(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[i]));
+	}
+
+	// Perform clipping in NDC
+	// NOTE: Clipping usually happens one step before this, but for this
+	// rasterizer at least it seems fine to do them here. Maybe it's because we
+	// clip in our triangle rasterization algorithm?
+
+	for (int i = 0; i < num_vertices; i++)
+	{
 		// Scale into view
 		Math3D::to_screen_space(triangle.vertices[i], Graphics::viewport, camera);
 	}
+
+	return false;
 }
 
 void Renderer::project_gizmo()
@@ -391,8 +461,13 @@ void Renderer::render_triangles_in_scene()
 			draw_face_normal(triangle);
 		}
 		
-		// Project the triangle into screen space.
-		project_triangle(triangle);
+		// Project the triangle into screen space. Clipping occurs here
+		bool should_cull = project_triangle(triangle);
+
+		if (should_cull)
+		{
+			continue;
+		}
 
 		// Check to see if the triangle should be culled
 		if (backface_culling)

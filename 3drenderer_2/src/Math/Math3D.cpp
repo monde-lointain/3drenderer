@@ -46,7 +46,7 @@ void Math3D::project(glm::vec4& point, const glm::mat4& projection_matrix)
 	point = glm::vec4(projection_matrix * point);
 }
 
-void Math3D::to_ndc(glm::vec4& point, const float& one_over_w)
+void Math3D::to_ndc(glm::vec4& point, float& one_over_w)
 {
 	point.x *= one_over_w;
 	point.y *= one_over_w;
@@ -73,7 +73,7 @@ void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 	// Transform the point from camera space to clip space
 	project(point, projection_matrix);
 
-	float one_over_w = point.w != 0.0f ? 1.0f / point.w : 1.0f;
+	float one_over_w = point.w == 0.0f ? 1.0f : 1.0f / point.w;
 
 	// Perform the perspective divide
 	to_ndc(point, one_over_w);

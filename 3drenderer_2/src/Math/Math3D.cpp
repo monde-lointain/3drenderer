@@ -5,9 +5,12 @@
 #include "../Renderer/Gizmo.h"
 #include "../Renderer/Viewport.h"
 #include "../Utils/math_helpers.h"
+#include <tracy/tracy/Tracy.hpp>
 
 glm::mat4 Math3D::create_projection_matrix(const Camera& camera)
 {
+	ZoneScoped;
+
 	glm::mat4 projection_matrix = glm::perspective(
 		glm::radians(camera.fov), camera.aspect, camera.znear, camera.zfar);
 	return projection_matrix;
@@ -16,6 +19,8 @@ glm::mat4 Math3D::create_projection_matrix(const Camera& camera)
 glm::mat4 Math3D::create_world_matrix(
 	glm::vec3 scale, glm::vec3 rotation, glm::vec3 translation)
 {
+	ZoneScoped;
+
 	glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
 	glm::mat4 rotation_x_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 rotation_y_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -30,12 +35,16 @@ glm::mat4 Math3D::create_world_matrix(
 
 void Math3D::transform_point(glm::vec4& point, const glm::mat4& modelview_matrix)
 {
+	ZoneScoped;
+
 	// Transform the point from model space to camera space
 	point = glm::vec4(modelview_matrix * point);
 }
 
 void Math3D::rotate_normal(glm::vec3& normal, const glm::mat4& modelview_matrix)
 {
+	ZoneScoped;
+
 	// Transform the normals by the inverse-transpose of the model-view matrix
 	glm::mat3 inverse = glm::inverse(glm::mat3(modelview_matrix));
 	glm::mat3 normal_matrix = glm::transpose(inverse);
@@ -44,11 +53,15 @@ void Math3D::rotate_normal(glm::vec3& normal, const glm::mat4& modelview_matrix)
 
 void Math3D::project(glm::vec4& point, const glm::mat4& projection_matrix)
 {
+	ZoneScoped;
+
 	point = glm::vec4(projection_matrix * point);
 }
 
 void Math3D::to_ndc(glm::vec4& point, float& one_over_w)
 {
+	ZoneScoped;
+
 	point.x *= one_over_w;
 	point.y *= one_over_w;
 	point.z *= one_over_w;
@@ -56,6 +69,8 @@ void Math3D::to_ndc(glm::vec4& point, float& one_over_w)
 
 void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport, const Camera& camera)
 {
+	ZoneScoped;
+
 	// Transform the point from clip space to screen space
 	point.x = (point.x + 1.0f) * (float)viewport.width * 0.5f;
 	point.y = (point.y + 1.0f) * (float)viewport.height * 0.5f;
@@ -71,6 +86,8 @@ void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport, const C
 void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 	const Viewport& viewport, const Camera& camera)
 {
+	ZoneScoped;
+
 	// Transform the point from camera space to clip space
 	project(point, projection_matrix);
 
@@ -84,6 +101,8 @@ void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 
 int Math3D::orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c)
 {
+	ZoneScoped;
+
 	int signed_area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	// TODO: Flip the sign of the signed area based on the winding order of
 	// the triangle. CW would be *= -1.0f and CCW *=  1.0f.
@@ -93,6 +112,8 @@ int Math3D::orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c)
 float Math3D::orient2d_f(
 	const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
 {
+	ZoneScoped;
+
 	float signed_area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	// See comment for orient2d_i
 	return signed_area;

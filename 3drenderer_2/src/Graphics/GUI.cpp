@@ -5,6 +5,7 @@
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_sdlrenderer.h>
 #include <SDL.h>
+#include <tracy/tracy/Tracy.hpp>
 
 bool GUI::init(SDL_Window* window, SDL_Renderer* renderer)
 {
@@ -30,6 +31,8 @@ void GUI::process_input(SDL_Event& event)
 
 void GUI::render()
 {
+    ZoneScoped; // for tracy
+
     ImGui_ImplSDLRenderer_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
@@ -53,13 +56,13 @@ void GUI::render()
     }
     ImGui::End();
 
-    // Performance counters log window
-    if (ImGui::Begin("Performance Counters", nullptr, ImGuiWindowFlags_NoCollapse))
-    {
-        std::vector<LogEntry>& perf_log = Logger::messages[LOG_CATEGORY_PERF_COUNTER];
-        print_log_messages(perf_log);
-    }
-    ImGui::End();
+    //// Performance counters log window
+    //if (ImGui::Begin("Performance Counters", nullptr, ImGuiWindowFlags_NoCollapse))
+    //{
+    //    std::vector<LogEntry>& perf_log = Logger::messages[LOG_CATEGORY_PERF_COUNTER];
+    //    print_log_messages(perf_log);
+    //}
+    //ImGui::End();
 
     ImGui::Render();
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());

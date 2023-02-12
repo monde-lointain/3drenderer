@@ -14,8 +14,11 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <SDL.h>
+#include <tracy/tracy/Tracy.hpp>
 #include <cassert>
 #include <iostream>
+
+constexpr int MAX_TRIANGLES = 100000;
 
 Renderer::Renderer()
 {
@@ -25,8 +28,8 @@ Renderer::Renderer()
 	current_fps = 0.0f;
 	render_mode = WIREFRAME;
 	display_face_normals = false;
-	backface_culling = false;
-	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+	backface_culling = true;
+	camera.position = glm::vec3(0.0f, 5.0f, 10.0f);
 	camera.direction = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.update();
 	projection_matrix = glm::mat4(0.0f);
@@ -48,8 +51,8 @@ void Renderer::setup()
 	// Initialize the camera
 	camera.fov = 60.0f; 
 	camera.aspect = (float)Graphics::viewport.width / (float)Graphics::viewport.height;
-	camera.znear = 1.0f;
-	camera.zfar = 10.0f;
+	camera.znear = 0.1f;
+	camera.zfar = 50.0f;
 
 	// Create the projection matrix
 	projection_matrix = Math3D::create_projection_matrix(camera);
@@ -59,13 +62,14 @@ void Renderer::setup()
 	view_matrix = glm::lookAt(camera.position, target, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	// Create the meshes in the scene
-	Mesh* mesh = create_mesh("assets/models/cube/cubetest.obj");
+	Mesh* mesh = create_mesh("assets/models/robot/robot.obj");
 	meshes.push_back(mesh);
 }
 
 void Renderer::process_input()
 {
-	BEGIN_TIMED_BLOCK(Input)
+	ZoneScoped; // for tracy
+
 	SDL_Event event;
 
 	/**
@@ -241,12 +245,12 @@ void Renderer::process_input()
 			}
 		}
 	}
-	END_TIMED_BLOCK(Input)
 }
 
 void Renderer::update()
 {
-	BEGIN_TIMED_BLOCK(Update)
+	ZoneScoped; // for tracy
+
 	// Update the position and rotation of the camera
 	camera.update();
 
@@ -274,12 +278,12 @@ void Renderer::update()
 		transform_triangles(mesh, modelview_matrix);
 		transform_gizmo(modelview_matrix);
 	}
-	END_TIMED_BLOCK(Update)
 }
 
 void Renderer::render()
 {
-	BEGIN_TIMED_BLOCK(Render)
+	ZoneScoped; // for tracy
+
 	Graphics::clear_framebuffer(Colors::BLUE);
 	Graphics::clear_z_buffer();
 
@@ -297,7 +301,6 @@ void Renderer::render()
 
 	Graphics::render_gui();
 	Graphics::render_frame();
-	END_TIMED_BLOCK(Render)
 }
 
 void Renderer::run()
@@ -313,13 +316,12 @@ void Renderer::run()
 
 	while (is_running)
 	{
-		BEGIN_TIMED_BLOCK(FrameLoop)
 		uint64 start = SDL_GetPerformanceCounter();
 		process_input();
 		update();
 		render();
+		FrameMark; // for tracy
 		uint64 end = SDL_GetPerformanceCounter();
-		END_TIMED_BLOCK(FrameLoop)
 
 		float time_elapsed = (float)(end - start) / (float)SDL_GetPerformanceFrequency();
 
@@ -440,6 +442,8 @@ void Renderer::render_gizmo()
 
 void Renderer::render_triangles_in_scene()
 {
+	ZoneScoped; // for tracy
+
 	for (Triangle& triangle : triangles_in_scene)
 	{
 		if (display_face_normals)
@@ -456,40 +460,45 @@ void Renderer::render_triangles_in_scene()
 		}
 	}
 
-	// TODO: Clipping goes here
-	BEGIN_TIMED_BLOCK(Clipping)
-	std::vector<Triangle> triangles_to_rasterize = clipper.clip_triangles(triangles_in_scene);
-	END_TIMED_BLOCK(Clipping)
+	// Clip all the triangles and stick them in a new array
+	std::vector triangles_to_rasterize =
+		clipper.clip_triangles(triangles_in_scene);
 
-	// Logging
-	Logger::info(LOG_CATEGORY_CLIPPING, "Triangle clip coords:");
-	for (const Triangle& triangle : triangles_to_rasterize)
-	{
-		Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[0]));
-		Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[1]));
-		Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[2]));
-	}
-	Logger::info(LOG_CATEGORY_CLIPPING, "Triangle texcoords:");
-	for (const Triangle& triangle : triangles_to_rasterize)
-	{
-		Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[0]));
-		Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[1]));
-		Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[2]));
-	}
+	//for (int i = 0; i < MAX_TRIANGLES; i++)
+	//{
+	//	triangles_to_rasterize[i] = triangles_in_scene[i];
+	//}
 
-	BEGIN_TIMED_BLOCK(RenderTriangles)
+	//// Logging
+	//Logger::info(LOG_CATEGORY_CLIPPING, "Triangle clip coords:");
+	//for (const Triangle& triangle : triangles_to_rasterize)
+	//{
+	//	Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[0]));
+	//	Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[1]));
+	//	Logger::info(LOG_CATEGORY_CLIPPING, vec4_to_string(triangle.vertices[2]));
+	//}
+	//Logger::info(LOG_CATEGORY_CLIPPING, "Triangle texcoords:");
+	//for (const Triangle& triangle : triangles_to_rasterize)
+	//{
+	//	Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[0]));
+	//	Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[1]));
+	//	Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[2]));
+	//}
+
 	for (Triangle& triangle : triangles_to_rasterize)
 	{
+		ZoneNamedN(rasterize_triangles_scope, "Rasterize triangles", true); // for tracy
+
 		// Perform conversion to NDC and viewport transform here
 		int num_vertices = 3;
-		for (int i = 0; i < num_vertices; i++)
+		for (int j = 0; j < num_vertices; j++)
 		{
 			// Store 1/w for later use
-			triangle.inv_w[i] = is_nearly_zero(triangle.vertices[i].w) ? 1.0f : 1.0f / triangle.vertices[i].w;
+			triangle.inv_w[j] = is_nearly_zero(triangle.vertices[j].w) ? 1.0f : 1.0f / triangle.vertices[j].w;
 			// Perform perspective divide
-			Math3D::to_ndc(triangle.vertices[i], triangle.inv_w[i]);
+			Math3D::to_ndc(triangle.vertices[j], triangle.inv_w[j]);
 			// Scale into view
-			Math3D::to_screen_space(triangle.vertices[i], Graphics::viewport, camera);
+			Math3D::to_screen_space(triangle.vertices[j], Graphics::viewport, camera);
 		}
 
 		// Perform backface culling
@@ -559,8 +568,6 @@ void Renderer::render_triangles_in_scene()
 			}
 		}
 	}
-	triangles_to_rasterize.clear();
-	END_TIMED_BLOCK(RenderTriangles)
 }
 
 void Renderer::draw_face_normal(const Triangle& triangle)

@@ -1,7 +1,8 @@
 #include "Renderer/Renderer.h"
 #include <SDL.h>
-#include <crtdbg.h>
+#include <tracy/tracy/Tracy.hpp>
 #include <iostream>
+#include <crtdbg.h>
 
 int main(int argc, char* args[])
 {

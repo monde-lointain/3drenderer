@@ -10,6 +10,7 @@
 #include "../Renderer/Gizmo.h"
 #include <glm/vec2.hpp>
 #include <SDL.h>
+#include <tracy/tracy/Tracy.hpp>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -136,6 +137,8 @@ void Graphics::initialize_framebuffer()
 
 void Graphics::clear_framebuffer(const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	int i;
 	int size = viewport.width * viewport.height;
 	int loop_count = size / 8;
@@ -158,6 +161,8 @@ void Graphics::clear_framebuffer(const uint32& color)
 
 void Graphics::clear_z_buffer()
 {
+	ZoneScoped; // for tracy
+
 	int i;
 	int size = viewport.width * viewport.height;
 	int loop_count = size / 8;
@@ -182,6 +187,8 @@ void Graphics::clear_z_buffer()
 
 void Graphics::update_framebuffer()
 {
+	ZoneScoped; // for tracy
+
 	SDL_UpdateTexture(framebuffer_texture,
 		nullptr,
 		framebuffer,
@@ -202,6 +209,8 @@ void Graphics::render_gui()
 
 void Graphics::render_frame()
 {
+	ZoneScoped; // for tracy
+
 	SDL_RenderPresent(renderer);
 }
 
@@ -256,6 +265,8 @@ void Graphics::draw_line_dda(const int& x0, const int& y0, const int& x1,
 void Graphics::draw_line_bresenham(const int& x0, const int& y0, const int& x1,
 	const int& y1, const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	int dx = abs(x1 - x0);
 	int dy = abs(y1 - y0);
 
@@ -272,6 +283,8 @@ void Graphics::draw_line_bresenham(const int& x0, const int& y0, const int& x1,
 	// Loop until the line is drawn
 	while (true)
 	{
+		ZoneScoped;
+
 		draw_pixel(current_x, current_y, color);
 
 		// Stop once both endpoints have been drawn
@@ -299,6 +312,8 @@ void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
 	const float& z1, const int& x2, const int& y2, const float& z2,
 	const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	int dx = abs(x2 - x1);
 	int dy = abs(y2 - y1);
 
@@ -369,6 +384,8 @@ void Graphics::draw_line_bresenham_3d_no_zfight(const int& x1, const int& y1,
 	const float& z1, const glm::vec3& n1, const int& x2, const int& y2,
 	const float& z2, const glm::vec3& n2, const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	int dx = abs(x2 - x1);
 	int dy = abs(y2 - y1);
 
@@ -447,6 +464,8 @@ void Graphics::draw_line_bresenham_3d_no_zfight(const int& x1, const int& y1,
 
 void Graphics::draw_wireframe(const Triangle& triangle, const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
 	vec2i b = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
 	vec2i c = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
@@ -457,6 +476,8 @@ void Graphics::draw_wireframe(const Triangle& triangle, const uint32& color)
 
 void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
 	vec2i b = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
 	vec2i c = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
@@ -473,6 +494,8 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 
 void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 {
+	ZoneScoped; // for tracy
+
 	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
 	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
 	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };
@@ -535,6 +558,8 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 
 void Graphics::draw_textured(const Triangle& triangle)
 {
+	ZoneScoped; // for tracy
+
 	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
 	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
 	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };

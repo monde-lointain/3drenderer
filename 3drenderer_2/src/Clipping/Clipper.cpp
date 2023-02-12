@@ -223,8 +223,9 @@ bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane& plane)
 	bool result;
 	switch (plane)
 	{
-		// case POSITIVE_W:
-		//	return vertex.w >= EPSILON;
+		case IN_VIEW_PLANE:
+			result = vertex.w >= EPSILON;
+			return result;
 		case RIGHT_PLANE:
 			result = vertex.x <= +vertex.w;
 			return result;
@@ -256,8 +257,9 @@ float Clipper::compute_intersect_ratio(
 	float result;
 	switch (plane)
 	{
-		// case POSITIVE_W:
-		//	return (prev.w - EPSILON) / (prev.w - curr.w);
+		case IN_VIEW_PLANE:
+			result = (prev.w - EPSILON) / (prev.w - curr.w);
+			return result;
 		case RIGHT_PLANE:
 			result = (prev.w - prev.x) / ((prev.w - prev.x) - (curr.w - curr.x));
 			return result;

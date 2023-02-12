@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
+#include <memory>
 #include <vector>
 
 struct Line3D;
@@ -9,6 +10,7 @@ struct Triangle;
 
 enum EClipPlane
 {
+	IN_VIEW_PLANE, // Used to clip vertices with negative w coordinates
 	LEFT_PLANE,
 	RIGHT_PLANE,
 	BOTTOM_PLANE,
@@ -21,9 +23,8 @@ enum EClipPlane
 
 struct Clipper
 {
-	EClipPlane planes;
+	EClipPlane planes[NUM_PLANES];
 	void clip_line(Line3D& line);
-	void clip_line_to_plane(Line3D& line, const EClipPlane& plane);
 	std::vector<Triangle> clip_triangles(std::vector<Triangle>& triangles);
 	std::vector<Triangle> clip_triangles_to_plane(
 		std::vector<Triangle> triangles, const EClipPlane& plane);

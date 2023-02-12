@@ -1,9 +1,5 @@
 #pragma once
 
-constexpr float EPSILON = 0.01f;
+constexpr float EPSILON = 1e-5;
 
-bool is_close_to_zero(float val)
-{
-	bool result = val < EPSILON && val > -EPSILON;
-	return result;
-}
+bool is_nearly_zero(float val);

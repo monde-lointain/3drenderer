@@ -4,6 +4,7 @@
 #include "../Renderer/Camera.h"
 #include "../Renderer/Gizmo.h"
 #include "../Renderer/Viewport.h"
+#include "../Utils/math_helpers.h"
 
 glm::mat4 Math3D::create_projection_matrix(const Camera& camera)
 {
@@ -73,7 +74,7 @@ void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 	// Transform the point from camera space to clip space
 	project(point, projection_matrix);
 
-	float one_over_w = point.w == 0.0f ? 1.0f : 1.0f / point.w;
+	float one_over_w = is_nearly_zero(point.w) ? 1.0f : 1.0f / point.w;
 
 	// Perform the perspective divide
 	to_ndc(point, one_over_w);

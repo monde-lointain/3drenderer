@@ -2,6 +2,19 @@
 
 std::unordered_map<LogCategory, std::vector<LogEntry>> Logger::messages;
 
+Logger::~Logger()
+{
+	Logger::reset();
+}
+
+void Logger::reset()
+{
+	// Clear all the messages in each log
+	for (auto& log : messages) {
+		log.second.clear();
+	}
+}
+
 void Logger::print(LogCategory category, const std::string& message)
 {
 	LogEntry entry;

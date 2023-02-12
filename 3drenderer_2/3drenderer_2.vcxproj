@@ -379,6 +379,7 @@
     <ClCompile Include="src\Logger\Logger.cpp" />
     <ClCompile Include="src\Clipping\Clipper.cpp" />
     <ClCompile Include="src\Math\Rotator.cpp" />
+    <ClCompile Include="src\Mesh\tex2.cpp" />
     <ClCompile Include="src\Mesh\Triangle.cpp" />
     <ClCompile Include="src\Renderer\Gizmo.cpp" />
     <ClCompile Include="src\Math\Math3D.cpp" />
@@ -390,6 +391,7 @@
     <ClCompile Include="src\Utils\debug_helpers.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Viewport.cpp" />
+    <ClCompile Include="src\Utils\math_helpers.cpp" />
     <ClCompile Include="src\Utils\string_ops.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -401,6 +403,7 @@
     <ClInclude Include="libs\imgui\imstb_rectpack.h" />
     <ClInclude Include="libs\imgui\imstb_textedit.h" />
     <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Line\Line3D.h" />
     <ClInclude Include="src\Graphics\GUI.h" />
     <ClInclude Include="src\Logger\Logger.h" />
     <ClInclude Include="src\Clipping\Clipper.h" />

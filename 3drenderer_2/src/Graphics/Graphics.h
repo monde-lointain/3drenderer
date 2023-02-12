@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Utils/3d_types.h"
+#include "../Utils/Colors.h"
 #include "../Renderer/Viewport.h"
 #include <glm/vec3.hpp>
 
@@ -15,7 +16,7 @@ namespace Graphics
 	void window_released();
 	void drag_window(SDL_Event& event);
 	void initialize_framebuffer();
-	void clear_framebuffer(uint32 color);
+	void clear_framebuffer(const uint32& color);
 	void clear_z_buffer();
 	void update_framebuffer();
 	void gui_process_input(SDL_Event& Event);

@@ -13,6 +13,7 @@ enum LogType {
 enum LogCategory {
     LOG_CATEGORY_CAMERA,
     LOG_CATEGORY_CLIPPING,
+    LOG_CATEGORY_PERF_COUNTER,
 };
 
 struct LogEntry {
@@ -21,10 +22,14 @@ struct LogEntry {
 };
 
 struct Logger {
-	// Stores keys and values for each log category, along with all the messages
-	// created for a particular frame for that category
-    static std::unordered_map<LogCategory, std::vector<LogEntry>> messages;
+    ~Logger();
+
     static void print(LogCategory category, const std::string& message);
     static void info(LogCategory category, const std::string& message);
     static void error(LogCategory category, const std::string& message);
+    static void reset();
+
+	// Stores keys and values for each log category, along with all the messages
+	// created for a particular frame for that category
+    static std::unordered_map<LogCategory, std::vector<LogEntry>> messages;
 };

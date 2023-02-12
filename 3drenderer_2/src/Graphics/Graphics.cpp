@@ -19,7 +19,7 @@
 static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 
-Viewport Graphics::viewport = { 800, 600, "3D Renderer" };
+Viewport Graphics::viewport = { 1920, 1080, "3D Renderer" };
 
 std::unique_ptr<GUI> gui = std::make_unique<GUI>();
 
@@ -134,7 +134,7 @@ void Graphics::initialize_framebuffer()
 	assert(framebuffer);
 }
 
-void Graphics::clear_framebuffer(uint32 color)
+void Graphics::clear_framebuffer(const uint32& color)
 {
 	int i;
 	int size = viewport.width * viewport.height;
@@ -635,20 +635,20 @@ void Graphics::draw_gizmo(const Gizmo& gizmo)
 {
 	// x axis
 	draw_line_bresenham(
-		int(gizmo.origin.x), int(gizmo.origin.y),
-		int(gizmo.bases[0].x), int(gizmo.bases[0].y),
+		int(gizmo.bases[0].points[0].x), int(gizmo.bases[0].points[0].y),
+		int(gizmo.bases[0].points[1].x), int(gizmo.bases[0].points[1].y),
 		Colors::YELLOW
 	);
 	// y axis
 	draw_line_bresenham(
-		int(gizmo.origin.x), int(gizmo.origin.y),
-		int(gizmo.bases[1].x), int(gizmo.bases[1].y),
+		int(gizmo.bases[1].points[0].x), int(gizmo.bases[1].points[0].y),
+		int(gizmo.bases[1].points[1].x), int(gizmo.bases[1].points[1].y),
 		Colors::MAGENTA
 	);
 	// z axis
 	draw_line_bresenham(
-		int(gizmo.origin.x), int(gizmo.origin.y),
-		int(gizmo.bases[2].x), int(gizmo.bases[2].y),
+		int(gizmo.bases[2].points[0].x), int(gizmo.bases[2].points[0].y),
+		int(gizmo.bases[2].points[1].x), int(gizmo.bases[2].points[1].y),
 		Colors::CYAN
 	);
 }

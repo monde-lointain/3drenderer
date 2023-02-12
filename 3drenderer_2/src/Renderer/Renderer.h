@@ -57,8 +57,8 @@ struct Renderer
 
 	void transform_triangles(Mesh* mesh, const glm::mat4& modelview_matrix);
 	void transform_gizmo(const glm::mat4& modelview_matrix);
-	bool project_triangle(Triangle& triangle);
 	void project_gizmo();
+	void render_gizmo();
 	void render_triangles_in_scene();
 	void draw_face_normal(const Triangle& triangle);
 	void compute_face_normal(Triangle& transformed_triangle);

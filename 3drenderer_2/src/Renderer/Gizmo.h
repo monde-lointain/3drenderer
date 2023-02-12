@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/vec4.hpp>
+#include "../Line/Line3D.h"
 
 struct Gizmo
 {
@@ -9,7 +9,6 @@ struct Gizmo
 
 	void reset();
 
-	glm::vec4 bases[3];
-	glm::vec4 origin;
+	Line3D bases[3];
 };
 

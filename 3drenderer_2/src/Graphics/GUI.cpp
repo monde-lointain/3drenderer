@@ -46,15 +46,26 @@ void GUI::render()
     ImGui::End();
 
     // Clip coordinates log window
-    if (ImGui::Begin("Clip coordinates", nullptr, log_window_flags))
+    if (ImGui::Begin("Clip coordinates", nullptr, ImGuiWindowFlags_NoCollapse))
     {
         std::vector<LogEntry>& clip_log = Logger::messages[LOG_CATEGORY_CLIPPING];
         print_log_messages(clip_log);
     }
     ImGui::End();
 
+    // Performance counters log window
+    if (ImGui::Begin("Performance Counters", nullptr, ImGuiWindowFlags_NoCollapse))
+    {
+        std::vector<LogEntry>& perf_log = Logger::messages[LOG_CATEGORY_PERF_COUNTER];
+        print_log_messages(perf_log);
+    }
+    ImGui::End();
+
     ImGui::Render();
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+
+    // Clear all of the logs in the logger
+    Logger::reset();
 }
 
 void GUI::print_log_messages(std::vector<LogEntry>& log)
@@ -63,7 +74,6 @@ void GUI::print_log_messages(std::vector<LogEntry>& log)
     {
         ImGui::Text(entry.message.c_str());
     }
-    log.clear();
 }
 
 void GUI::destroy()

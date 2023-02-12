@@ -20,3 +20,31 @@ std::string vec4_to_string(const glm::vec4& v, int precision)
 	std::string result = ss.str();
 	return result;
 }
+
+std::string tex2_to_string(const tex2& t, int precision)
+{
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(precision);
+	ss << "(" << t.u << ", " << t.v << ")";
+	std::string result = ss.str();
+	return result;
+}
+
+std::string to_string_with_commas(uint64 n)
+{
+	std::stringstream ss;
+	ss << n;
+	std::string str = ss.str();
+
+	int count = 0;
+	for (int i = (int)str.length() - 1; i >= 0; i--)
+	{
+		count++;
+		if (count % 3 == 0 && i != 0)
+		{
+			str.insert(i, ",");
+		}
+	}
+
+	return str;
+}

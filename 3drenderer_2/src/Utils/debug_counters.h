@@ -1,6 +1,8 @@
 #pragma once
 
 #include "3d_types.h"
+#include "string_ops.h"
+#include "../Logger/Logger.h"
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -19,26 +21,28 @@ typedef struct
 
 enum debug_counters
 {
-	debug_cycle_counters_FrameTime,
+	/*debug_cycle_counters_FrameTime,*/
 	debug_cycle_counters_FrameLoop,
 	debug_cycle_counters_Input,
 	debug_cycle_counters_Update,
 	debug_cycle_counters_Render,
-	debug_cycle_counters_BresenhamLine,
-	debug_cycle_counters_RenderNormals,
+	/*debug_cycle_counters_BresenhamLine,
+	debug_cycle_counters_RenderNormals,*/
 	debug_cycle_counters_RenderTriangles,
+	debug_cycle_counters_Clipping,
 };
 
 std::map<debug_counters, debug_cycle_counter> counters;
 std::map<debug_counters, std::string> counter_names = {
-	{debug_cycle_counters_FrameTime, "Frame time"},
+	/*{debug_cycle_counters_FrameTime, "Frame time"},*/
 	{debug_cycle_counters_FrameLoop, "Frame loop"},
 	{debug_cycle_counters_Input, "Input"},
 	{debug_cycle_counters_Update, "Update"},
 	{debug_cycle_counters_Render, "Render"},
-	{debug_cycle_counters_BresenhamLine, "Bresenham line"},
-	{debug_cycle_counters_RenderNormals, "Render normals"},
+	/*{debug_cycle_counters_BresenhamLine, "Bresenham line"},
+	{debug_cycle_counters_RenderNormals, "Render normals"},*/
 	{debug_cycle_counters_RenderTriangles, "Render triangles"},
+	{debug_cycle_counters_Clipping, "Clipping"},
 };
 
 #define BEGIN_TIMED_BLOCK(ID) \
@@ -60,13 +64,16 @@ void dump_cycle_counters()
 {
 #ifdef PROFILING_ON
 	// move cursor to row 1, column 1
-	std::cout << "\033[1;1H";
 	for (const auto& counter : counters)
 	{
-		// use std::endl to flush the output
-		std::cout << counter_names[counter.first] << ": "
-			<< counter.second.cycle_count << " cycles ("
-			<< counter.second.elapsed_time.count() << " ms)" << std::endl;
+		//// use std::endl to flush the output
+		//std::cout << counter_names[counter.first] << ": "
+		//	<< counter.second.cycle_count << " cycles ("
+		//	<< counter.second.elapsed_time.count() << " ms)" << std::endl;
+		std::string cycles_str = to_string_with_commas(counter.second.cycle_count);
+		std::string time_str = to_string_with_commas(counter.second.elapsed_time.count());
+		std::string counter_str = counter_names[counter.first] + ": " + cycles_str + " cycles (" + time_str + " ms)";
+		Logger::info(LOG_CATEGORY_PERF_COUNTER, counter_str);
 	}
 	counters.clear();
 #endif

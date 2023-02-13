@@ -26,7 +26,7 @@ Renderer::Renderer()
 	is_running = false;
 	seconds_per_frame = 0.0f;
 	current_fps = 0.0f;
-	render_mode = WIREFRAME;
+	render_mode = TEXTURED_WIREFRAME;
 	display_face_normals = false;
 	backface_culling = true;
 	camera.position = glm::vec3(0.0f, 5.0f, 10.0f);
@@ -51,7 +51,7 @@ void Renderer::setup()
 	// Initialize the camera
 	camera.fov = 60.0f; 
 	camera.aspect = (float)Graphics::viewport.width / (float)Graphics::viewport.height;
-	camera.znear = 0.1f;
+	camera.znear = 2.0f;
 	camera.zfar = 50.0f;
 
 	// Create the projection matrix
@@ -460,9 +460,12 @@ void Renderer::render_triangles_in_scene()
 		}
 	}
 
+	std::unique_ptr<Triangle[]> triangles_to_rasterize =
+		std::make_unique<Triangle[]>(10000);
+	int num_triangles_to_rasterize = 0;
 	// Clip all the triangles and stick them in a new array
-	std::vector triangles_to_rasterize =
-		clipper.clip_triangles(triangles_in_scene);
+	clipper.clip_triangles(
+		triangles_in_scene, triangles_to_rasterize, num_triangles_to_rasterize);
 
 	//for (int i = 0; i < MAX_TRIANGLES; i++)
 	//{
@@ -485,9 +488,11 @@ void Renderer::render_triangles_in_scene()
 	//	Logger::info(LOG_CATEGORY_CLIPPING, tex2_to_string(triangle.texcoords[2]));
 	//}
 
-	for (Triangle& triangle : triangles_to_rasterize)
+	for (int i = 0; i < num_triangles_to_rasterize; i++)
 	{
 		ZoneNamedN(rasterize_triangles_scope, "Rasterize triangles", true); // for tracy
+
+		Triangle& triangle = triangles_to_rasterize[i];
 
 		// Perform conversion to NDC and viewport transform here
 		int num_vertices = 3;

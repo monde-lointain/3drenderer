@@ -7,3 +7,4 @@ tex2 tex2_lerp(tex2 a, tex2 b, float t)
 	result.v = a.v * (1.0f - t) + b.v * t;
 	return result;
 }
+

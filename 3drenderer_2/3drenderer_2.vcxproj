@@ -255,6 +255,7 @@
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -312,6 +313,7 @@
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -385,6 +387,7 @@
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -473,6 +476,7 @@
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

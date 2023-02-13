@@ -283,8 +283,6 @@ void Graphics::draw_line_bresenham(const int& x0, const int& y0, const int& x1,
 	// Loop until the line is drawn
 	while (true)
 	{
-		ZoneScoped;
-
 		draw_pixel(current_x, current_y, color);
 
 		// Stop once both endpoints have been drawn

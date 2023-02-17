@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Light/Light.h"
-#include "../Mesh/Triangle.h"
+#include "../Triangle/Triangle.h"
 #include "../Renderer/Camera.h"
 #include "../Renderer/Gizmo.h"
 #include <glm/mat4x4.hpp>

@@ -1,5 +1,7 @@
 #include "debug_helpers.h"
 
+#ifdef _MSC_VER
+
 #include <crtdbg.h>
 
 void debug_heap_check()
@@ -13,3 +15,5 @@ void debug_heap_check()
     }
 #endif
 }
+
+#endif

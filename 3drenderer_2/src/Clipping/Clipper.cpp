@@ -3,7 +3,7 @@
 #include "../Line/Line3D.h"
 #include "../Logger/Logger.h"
 #include "../Mesh/tex2.h"
-#include "../Mesh/Triangle.h"
+#include "../Triangle/Triangle.h"
 #include "../Utils/math_helpers.h"
 #include "../Utils/string_ops.h"
 #include <glm/gtc/matrix_access.hpp>
@@ -288,15 +288,15 @@ void Clipper::clip_triangles_to_plane(Triangle tmp[],
 			if (num_clip_verts == 3)
 			{
 				Triangle a = triangle;
-				a.vertices[0] = vertices[0];
-				a.vertices[1] = vertices[1];
-				a.vertices[2] = vertices[2];
-				a.texcoords[0] = texcoords[0];
-				a.texcoords[1] = texcoords[1];
-				a.texcoords[2] = texcoords[2];
-				a.gouraud[0] = gouraud[0];
-				a.gouraud[1] = gouraud[1];
-				a.gouraud[2] = gouraud[2];
+				a.vertices[0].position = vertices[0];
+				a.vertices[1].position = vertices[1];
+				a.vertices[2].position = vertices[2];
+				a.vertices[0].uv = texcoords[0];
+				a.vertices[1].uv = texcoords[1];
+				a.vertices[2].uv = texcoords[2];
+				a.vertices[0].gouraud = gouraud[0];
+				a.vertices[1].gouraud = gouraud[1];
+				a.vertices[2].gouraud = gouraud[2];
 
 				tmp[num_new_tris] = a;
 				num_new_tris++;
@@ -305,27 +305,26 @@ void Clipper::clip_triangles_to_plane(Triangle tmp[],
 			else if (num_clip_verts == 4)
 			{
 				Triangle a = triangle;
-				a.vertices[0] = vertices[0];
-				a.vertices[1] = vertices[1];
-				a.vertices[2] = vertices[2];
-				a.texcoords[0] = texcoords[0];
-				a.texcoords[1] = texcoords[1];
-				a.texcoords[2] = texcoords[2];
-				a.gouraud[0] = gouraud[0];
-				a.gouraud[1] = gouraud[1];
-				a.gouraud[2] = gouraud[2];
-				// TODO: Interpolate Gouraud here, but not flat since it stays consistent across the face
+				a.vertices[0].position = vertices[0];
+				a.vertices[1].position = vertices[1];
+				a.vertices[2].position = vertices[2];
+				a.vertices[0].uv = texcoords[0];
+				a.vertices[1].uv = texcoords[1];
+				a.vertices[2].uv = texcoords[2];
+				a.vertices[0].gouraud = gouraud[0];
+				a.vertices[1].gouraud = gouraud[1];
+				a.vertices[2].gouraud = gouraud[2];
 
 				Triangle b = triangle;
-				b.vertices[0] = vertices[2];
-				b.vertices[1] = vertices[3];
-				b.vertices[2] = vertices[0];
-				b.texcoords[0] = texcoords[2];
-				b.texcoords[1] = texcoords[3];
-				b.texcoords[2] = texcoords[0];
-				b.gouraud[0] = gouraud[2];
-				b.gouraud[1] = gouraud[3];
-				b.gouraud[2] = gouraud[0];
+				b.vertices[0].position = vertices[2];
+				b.vertices[1].position = vertices[3];
+				b.vertices[2].position = vertices[0];
+				b.vertices[0].uv = texcoords[2];
+				b.vertices[1].uv = texcoords[3];
+				b.vertices[2].uv = texcoords[0];
+				b.vertices[0].gouraud = gouraud[2];
+				b.vertices[1].gouraud = gouraud[3];
+				b.vertices[2].gouraud = gouraud[0];
 
 				tmp[num_new_tris] = a;
 				num_new_tris++;
@@ -358,19 +357,19 @@ void Clipper::clip_triangle_to_plane(const Triangle& triangle,
 	constexpr int num_verts = 3;
 	// Extract the vertices
 	glm::vec4 vertices[num_verts];
-	vertices[0] = triangle.vertices[0];
-	vertices[1] = triangle.vertices[1];
-	vertices[2] = triangle.vertices[2];
+	vertices[0] = triangle.vertices[0].position;
+	vertices[1] = triangle.vertices[1].position;
+	vertices[2] = triangle.vertices[2].position;
 	// Extract the UVs
 	tex2 texcoords[num_verts];
-	texcoords[0] = triangle.texcoords[0];
-	texcoords[1] = triangle.texcoords[1];
-	texcoords[2] = triangle.texcoords[2];
+	texcoords[0] = triangle.vertices[0].uv;
+	texcoords[1] = triangle.vertices[1].uv;
+	texcoords[2] = triangle.vertices[2].uv;
 	// Extract the Gouraud color
 	float gouraud[num_verts];
-	gouraud[0] = triangle.gouraud[0];
-	gouraud[1] = triangle.gouraud[1];
-	gouraud[2] = triangle.gouraud[2];
+	gouraud[0] = triangle.vertices[0].gouraud;
+	gouraud[1] = triangle.vertices[1].gouraud;
+	gouraud[2] = triangle.vertices[2].gouraud;
 
 	// Start with the last vertex as the previous vertex
 	glm::vec4 prev_vert = vertices[num_verts - 1];
@@ -433,9 +432,9 @@ bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane& plane)
 {
 	// Get the clip distance for the current plane for each of the vertices on
 	// the triangle
-	bool v0_inside = is_inside_plane(triangle.vertices[0], plane);
-	bool v1_inside = is_inside_plane(triangle.vertices[1], plane);
-	bool v2_inside = is_inside_plane(triangle.vertices[2], plane);
+	bool v0_inside = is_inside_plane(triangle.vertices[0].position, plane);
+	bool v1_inside = is_inside_plane(triangle.vertices[1].position, plane);
+	bool v2_inside = is_inside_plane(triangle.vertices[2].position, plane);
 
 	// If all vertices are inside the plane, the triangle does not need
 	// to be clipped and can be passed to the next clip stage unmodified

@@ -42,7 +42,7 @@
     <ClCompile Include="src\Renderer\Gizmo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mesh\Triangle.cpp">
+    <ClCompile Include="src\Triangle\Triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Clipping\Clipper.cpp">
@@ -866,16 +866,13 @@
     <ClInclude Include="src\Math\Math3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mesh\Triangle.h">
+    <ClInclude Include="src\Triangle\Triangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Mesh\tex2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\Gizmo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Math\3d_vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Misc\3d_algorithm.h">
@@ -951,6 +948,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Renderer\ShadingMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Triangle\Vertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

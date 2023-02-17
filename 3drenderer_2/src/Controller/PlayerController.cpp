@@ -4,7 +4,12 @@
 #include "../Renderer/Renderer.h"
 #include "../Window/Window.h"
 #include "../World/World.h"
+
+#ifdef _MSC_VER // Windows
 #include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 void PlayerController::initialize(std::shared_ptr<Window> app_window,
 	std::shared_ptr<World> app_world, std::shared_ptr<Renderer> app_renderer)

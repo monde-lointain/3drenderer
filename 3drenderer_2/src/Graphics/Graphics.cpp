@@ -2,23 +2,26 @@
 
 #include "GUI.h"
 #include "../Logger/Logger.h"
-#include "../Math/3d_vector.h"
 #include "../Math/Math3D.h"
 #include "../Mesh/Texture.h"
-#include "../Mesh/Triangle.h"
+#include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/debug_helpers.h"
 #include "../Renderer/Gizmo.h"
 #include "../Renderer/Renderer.h"
 #include "../Renderer/Viewport.h"
-#include <glm/vec2.hpp>
-#include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
 #include <vectorclass/vectorclass.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <limits>
+
+#ifdef _MSC_VER // Windows
+#include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 void Graphics::initialize_framebuffer()
 {
@@ -364,9 +367,9 @@ void Graphics::draw_wireframe(const Triangle& triangle, const uint32& color)
 {
 	ZoneScoped; // for tracy
 
-	vec2i a = { lrintf(triangle.vertices[0].x), lrintf(triangle.vertices[0].y) };
-	vec2i b = { lrintf(triangle.vertices[1].x), lrintf(triangle.vertices[1].y) };
-	vec2i c = { lrintf(triangle.vertices[2].x), lrintf(triangle.vertices[2].y) };
+	glm::ivec2 a = { lrintf(triangle.vertices[0].position.x), lrintf(triangle.vertices[0].position.y) };
+	glm::ivec2 b = { lrintf(triangle.vertices[1].position.x), lrintf(triangle.vertices[1].position.y) };
+	glm::ivec2 c = { lrintf(triangle.vertices[2].position.x), lrintf(triangle.vertices[2].position.y) };
 	draw_line_bresenham(a.x, a.y, b.x, b.y, color);
 	draw_line_bresenham(b.x, b.y, c.x, c.y, color);
 	draw_line_bresenham(c.x, c.y, a.x, a.y, color);
@@ -376,38 +379,41 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 {
 	ZoneScoped; // for tracy
 
-	vec2i a = { lrintf(triangle.vertices[0].x), lrintf(triangle.vertices[0].y) };
-	vec2i b = { lrintf(triangle.vertices[1].x), lrintf(triangle.vertices[1].y) };
-	vec2i c = { lrintf(triangle.vertices[2].x), lrintf(triangle.vertices[2].y) };
-	float za = triangle.vertices[0].z;
-	float zb = triangle.vertices[1].z;
-	float zc = triangle.vertices[2].z;
-	glm::vec3 na = triangle.normals[0];
-	glm::vec3 nb = triangle.normals[1];
-	glm::vec3 nc = triangle.normals[1];
+	glm::ivec2 a = { lrintf(triangle.vertices[0].position.x), lrintf(triangle.vertices[0].position.y) };
+	glm::ivec2 b = { lrintf(triangle.vertices[1].position.x), lrintf(triangle.vertices[1].position.y) };
+	glm::ivec2 c = { lrintf(triangle.vertices[2].position.x), lrintf(triangle.vertices[2].position.y) };
+	float za = triangle.vertices[0].position.z;
+	float zb = triangle.vertices[1].position.z;
+	float zc = triangle.vertices[2].position.z;
+	glm::vec3 na = triangle.vertices[0].normal;
+	glm::vec3 nb = triangle.vertices[1].normal;
+	glm::vec3 nc = triangle.vertices[1].normal;
 	draw_line_bresenham_3d_no_zfight(a.x, a.y, za, na, b.x, b.y, zb, nb, color);
 	draw_line_bresenham_3d_no_zfight(b.x, b.y, zb, nb, c.x, c.y, zc, nc, color);
 	draw_line_bresenham_3d_no_zfight(c.x, c.y, zc, nc, a.x, a.y, za, na, color);
 }
+
+typedef int32 fixed; // 28.4 fixed point format
+constexpr int FIXED_BITS = 4;
 
 void Graphics::draw_solid(
 	const Triangle& triangle, uint32 color, EShadingMode shading_mode)
 {
 	ZoneScoped; // for tracy
 
-	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
-	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
-	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };
-	float v0z = triangle.vertices[0].z;
-	float v1z = triangle.vertices[1].z;
-	float v2z = triangle.vertices[2].z;
-	float inv_w0 = triangle.inv_w[0];
-	float inv_w1 = triangle.inv_w[1];
-	float inv_w2 = triangle.inv_w[2];
+	glm::vec2 v0 = { triangle.vertices[0].position.x, triangle.vertices[0].position.y };
+	glm::vec2 v1 = { triangle.vertices[1].position.x, triangle.vertices[1].position.y };
+	glm::vec2 v2 = { triangle.vertices[2].position.x, triangle.vertices[2].position.y };
+	float v0z = triangle.vertices[0].position.z;
+	float v1z = triangle.vertices[1].position.z;
+	float v2z = triangle.vertices[2].position.z;
+	float inv_w0 = triangle.vertices[0].position.w;
+	float inv_w1 = triangle.vertices[1].position.w;
+	float inv_w2 = triangle.vertices[2].position.w;
 	float intensity = triangle.flat_value;
-	float v0_intensity = triangle.gouraud[0];
-	float v1_intensity = triangle.gouraud[1];
-	float v2_intensity = triangle.gouraud[2];
+	float v0_intensity = triangle.vertices[0].gouraud;
+	float v1_intensity = triangle.vertices[1].gouraud;
+	float v2_intensity = triangle.vertices[2].gouraud;
 	uint32 shaded = color;
 
 	// Calculate triangle bounding box
@@ -424,7 +430,7 @@ void Graphics::draw_solid(
 	
 	// Compute the inverse area of the triangle
 	float area = Math3D::orient2d_f(v0, v1, v2);
-	float inv_area = 1.0f / area;
+	float inv_area2 = 1.0f / area;
 
 	glm::vec2 p;
 	// Loop over the bounding box and rasterize the triangle
@@ -437,9 +443,9 @@ void Graphics::draw_solid(
 			float alpha = Math3D::orient2d_f(v1, v2, p);
 			float beta = Math3D::orient2d_f(v2, v0, p);
 			float gamma = Math3D::orient2d_f(v0, v1, p);
-			alpha *= inv_area;
-			beta *= inv_area;
-			gamma *= inv_area;
+			alpha *= inv_area2;
+			beta *= inv_area2;
+			gamma *= inv_area2;
 
 			// Check if the point is inside the triangle
 			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
@@ -469,19 +475,12 @@ void Graphics::draw_solid(
 						break;
 					case GOURAUD:
 					{	 
-						// Interpolate 1/w
-						float A = inv_w0 * alpha;
-						float B = inv_w1 * beta;
-						float C = inv_w2 * gamma;
-						float ABC = 1.0f / (A + B + C);
-
-						// Interpolate intensity with interpolated 1/w
+						// Interpolate the Gouraud values across the triangle
+						// (I can't notice any artifacts with perspective here,
+						// so we can probably get away without interpolating)
 						float pixel_intensity = v0_intensity * alpha
 												+ v1_intensity * beta
 												+ v2_intensity * gamma;
-
-						//// Normalize
-						//pixel_intensity *= ABC;
 
 						// Get the new shaded value
 						shaded = apply_intensity(color, pixel_intensity);
@@ -500,23 +499,35 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 {
 	ZoneScoped; // for tracy
 
-	glm::vec2 v0 = { triangle.vertices[0].x, triangle.vertices[0].y };
-	glm::vec2 v1 = { triangle.vertices[1].x, triangle.vertices[1].y };
-	glm::vec2 v2 = { triangle.vertices[2].x, triangle.vertices[2].y };
-	float v0z = triangle.vertices[0].z;
-	float v1z = triangle.vertices[1].z;
-	float v2z = triangle.vertices[2].z;
-	tex2 uv0 = { triangle.texcoords[0].u,triangle.texcoords[0].v };
-	tex2 uv1 = { triangle.texcoords[1].u,triangle.texcoords[1].v };
-	tex2 uv2 = { triangle.texcoords[2].u,triangle.texcoords[2].v };
-	float inv_w0 = triangle.inv_w[0];
-	float inv_w1 = triangle.inv_w[1];
-	float inv_w2 = triangle.inv_w[2];
-	std::shared_ptr<Texture> texture = triangle.texture;
+	// x, y coordinates in screen space (x/w, y/w)
+	glm::vec2 v0 = { triangle.vertices[0].position.x, triangle.vertices[0].position.y };
+	glm::vec2 v1 = { triangle.vertices[1].position.x, triangle.vertices[1].position.y };
+	glm::vec2 v2 = { triangle.vertices[2].position.x, triangle.vertices[2].position.y };
+
+	// z coordinates in screen space (z/w)
+	float v0z = triangle.vertices[0].position.z;
+	float v1z = triangle.vertices[1].position.z;
+	float v2z = triangle.vertices[2].position.z;
+
+	// texture coordinates (non-interpolated)
+	tex2 uv0 = { triangle.vertices[0].uv.u,triangle.vertices[0].uv.v };
+	tex2 uv1 = { triangle.vertices[1].uv.u,triangle.vertices[1].uv.v };
+	tex2 uv2 = { triangle.vertices[2].uv.u,triangle.vertices[2].uv.v };
+
+	// 1/w
+	float inv_w0 = triangle.vertices[0].position.w;
+	float inv_w1 = triangle.vertices[1].position.w;
+	float inv_w2 = triangle.vertices[2].position.w;
+
+	// face intensity for flat shading
 	float intensity = triangle.flat_value;
-	float v0_intensity = triangle.gouraud[0];
-	float v1_intensity = triangle.gouraud[1];
-	float v2_intensity = triangle.gouraud[2];
+
+	// vertex intensities for vertex shading
+	float v0_intensity = triangle.vertices[0].gouraud;
+	float v1_intensity = triangle.vertices[1].gouraud;
+	float v2_intensity = triangle.vertices[2].gouraud;
+
+	std::shared_ptr<Texture> texture = triangle.texture;
 
 	// Calculate triangle bounding box
 	int min_x = std::min({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
@@ -530,9 +541,44 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 	min_y = std::max(min_y, 0);
 	max_y = std::min(max_y, viewport->height - 1);
 
+	//// Compute the edge equations for each of the three line segments on the triangle (Ax + By + C)
+	//float A01 = v0.y - v1.y;
+	//float A12 = v1.y - v2.y;
+	//float A20 = v2.y - v0.y;
+	//float B01 = v1.x - v0.x;
+	//float B12 = v2.x - v1.x;
+	//float B20 = v0.x - v2.x;
+	//float C01 = v0.x * v1.y - v1.x * v0.y;
+	//float C12 = v1.x * v2.y - v2.x * v1.y;
+	//float C20 = v2.x * v0.y - v0.x * v2.y;
+
+	//float C1 = A01 * v0.x - B01 * v0.y;
+	//float C2 = A12 * v1.x - B12 * v1.y;
+	//float C3 = A20 * v2.x - B20 * v2.y;
+
+	//float Cy1 = C1 + B01 * (float)max_y - A01 * (float)min_x;
+	//float Cy2 = C2 + B12 * (float)max_y - A12 * (float)min_x;
+	//float Cy3 = C3 + B20 * (float)max_y - A20 * (float)min_x;
+
+	//glm::vec2 p0 = glm::vec2(float(min_x), float(min_y));
+	//float w0_row = Math3D::orient2d_f(v1, v2, p0);
+	//float w1_row = Math3D::orient2d_f(v2, v0, p0);
+	//float w2_row = Math3D::orient2d_f(v0, v1, p0);
+
+
 	// Compute the inverse area of the triangle
-	float area = Math3D::orient2d_f(v0, v1, v2);
-	float inv_area = 1.0f / area;
+	float area2 = Math3D::orient2d_f(v0, v1, v2);
+	float inv_area2 = 1.0f / area2;
+
+	// Normalize the screen space z coordinates (TODO: do we need to do the same with 1/w?)
+	v0z *= inv_area2;
+	v1z *= inv_area2;
+	v2z *= inv_area2;
+
+	inv_w0 *= inv_area2;
+	inv_w1 *= inv_area2;
+	inv_w2 *= inv_area2;
+
 
 	glm::vec2 p;
 	// Loop over the bounding box and rasterize the triangle
@@ -545,9 +591,6 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 			float alpha = Math3D::orient2d_f(v1, v2, p);
 			float beta = Math3D::orient2d_f(v2, v0, p);
 			float gamma = Math3D::orient2d_f(v0, v1, p);
-			alpha *= inv_area;
-			beta *= inv_area;
-			gamma *= inv_area;
 
 			// Check if the point is inside the triangle
 			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
@@ -598,12 +641,16 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 					case GOURAUD:
 					{
 						// Interpolate intensity with interpolated 1/w
-						float pixel_intensity = v0_intensity * alpha
-												+ v1_intensity * beta
-												+ v2_intensity * gamma;
+						// NOTE: Although we don't interpolate in draw_solid, we
+						// do here because we already have to compute the
+						// interpolation constants to do the texture mapping
+						// anyways
+						float pixel_intensity = v0_intensity * A
+												+ v1_intensity * B
+												+ v2_intensity * C;
 
-						//// Normalize
-						//pixel_intensity *= ABC;
+						// Normalize
+						pixel_intensity *= ABC;
 
 						// Get the new shaded value
 						color = apply_intensity(color, pixel_intensity);
@@ -618,14 +665,144 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 	}
 }
 
+/**
+ * Original rasterization algorithm kept for reference purposes. This one had
+ * subpixel precision but was much slower
+ */
+//void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode)
+//{
+//	ZoneScoped; // for tracy
+//
+//	glm::vec2 v0 = { triangle.vertices[0].position.x, triangle.vertices[0].position.y };
+//	glm::vec2 v1 = { triangle.vertices[1].position.x, triangle.vertices[1].position.y };
+//	glm::vec2 v2 = { triangle.vertices[2].position.x, triangle.vertices[2].position.y };
+//	float v0z = triangle.vertices[0].position.z;
+//	float v1z = triangle.vertices[1].position.z;
+//	float v2z = triangle.vertices[2].position.z;
+//	tex2 uv0 = { triangle.vertices[0].uv.u,triangle.vertices[0].uv.v };
+//	tex2 uv1 = { triangle.vertices[1].uv.u,triangle.vertices[1].uv.v };
+//	tex2 uv2 = { triangle.vertices[2].uv.u,triangle.vertices[2].uv.v };
+//	float inv_w0 = triangle.vertices[0].position.w;
+//	float inv_w1 = triangle.vertices[1].position.w;
+//	float inv_w2 = triangle.vertices[2].position.w;
+//	std::shared_ptr<Texture> texture = triangle.texture;
+//	float intensity = triangle.flat_value;
+//	float v0_intensity = triangle.vertices[0].gouraud;
+//	float v1_intensity = triangle.vertices[1].gouraud;
+//	float v2_intensity = triangle.vertices[2].gouraud;
+//
+//	// Calculate triangle bounding box
+//	int min_x = std::min({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+//	int max_x = std::max({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+//	int min_y = std::min({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
+//	int max_y = std::max({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
+//
+//	// Clip triangle bounding box to screen
+//	min_x = std::max(min_x, 0);
+//	max_x = std::min(max_x, viewport->width - 1);
+//	min_y = std::max(min_y, 0);
+//	max_y = std::min(max_y, viewport->height - 1);
+//
+//	// Compute the inverse area of the triangle
+//	float area = Math3D::orient2d_f(v0, v1, v2);
+//	float inv_area2 = 1.0f / area;
+//
+//	glm::vec2 p;
+//	// Loop over the bounding box and rasterize the triangle
+//	for (int x = min_x; x <= max_x; x++) {
+//		for (int y = min_y; y <= max_y; y++) {
+//			p.x = (float)x + 0.5f;
+//			p.y = (float)y + 0.5f;
+//
+//			// Compute barycentric weights
+//			float alpha = Math3D::orient2d_f(v1, v2, p);
+//			float beta = Math3D::orient2d_f(v2, v0, p);
+//			float gamma = Math3D::orient2d_f(v0, v1, p);
+//			alpha *= inv_area2;
+//			beta *= inv_area2;
+//			gamma *= inv_area2;
+//
+//			// Check if the point is inside the triangle
+//			if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
+//			{
+//				// Interpolate depth values
+//				float depth = v0z * alpha + v1z * beta + v2z * gamma;
+//
+//				// Check depth against z-buffer and only render if the pixel is
+//				// behind (front to back)
+//				int index = viewport->width * (viewport->height - y - 1) + x;
+//				float current_depth = depth_buffer[index];
+//				if (depth >= current_depth) {
+//					continue;
+//				}
+//				depth_buffer[index] = depth;
+//
+//				// Interpolate 1/w
+//				float A = inv_w0 * alpha;
+//				float B = inv_w1 * beta;
+//				float C = inv_w2 * gamma;
+//				float ABC = 1.0f / (A + B + C);
+//
+//				// Interpolate texture coordinates with interpolated 1/w
+//				float u = uv0.u * A + uv1.u * B + uv2.u * C;
+//				float v = uv0.v * A + uv1.v * B + uv2.v * C;
+//
+//				// Normalize
+//				u *= ABC;
+//				v *= ABC;
+//
+//				// Look up texel value and set pixel color
+//				int tex_x = abs(lrintf(u * (float)texture->width)) % texture->width;
+//				int tex_y = abs(lrintf(v * (float)texture->height)) % texture->height;
+//				int tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
+//				uint32 color = texture->pixels[tex_index];
+//
+//				// Execute the pixel shader
+//				switch (shading_mode)
+//				{
+//				case NONE:
+//					// Set pixel color
+//					draw_pixel(x, y, color);
+//					break;
+//				case FLAT:
+//					color = apply_intensity(color, intensity);
+//					draw_pixel(x, y, color);
+//					break;
+//				case GOURAUD:
+//				{
+//					// Interpolate intensity with interpolated 1/w
+//					// NOTE: Although we don't interpolate in draw_solid, we
+//					// do here because we already have to compute the
+//					// interpolation constants to do the texture mapping
+//					// anyways
+//					float pixel_intensity = v0_intensity * A
+//						+ v1_intensity * B
+//						+ v2_intensity * C;
+//
+//					// Normalize
+//					pixel_intensity *= ABC;
+//
+//					// Get the new shaded value
+//					color = apply_intensity(color, pixel_intensity);
+//
+//					// Render the pixel
+//					draw_pixel(x, y, color);
+//				}
+//				break;
+//				}
+//			}
+//		}
+//	}
+//}
+
 void Graphics::draw_vertices(
 	const Triangle& triangle, int point_size, const uint32& color)
 {
 	float offset = point_size * 0.5f;
-	for (glm::vec4 vertex : triangle.vertices)
+	for (const Vertex& vertex : triangle.vertices)
 	{
-		int x_pos = lrintf(vertex.x - offset + 0.5f);
-		int y_pos = lrintf(vertex.y - offset + 0.5f);
+		int x_pos = lrintf(vertex.position.x - offset + 0.5f);
+		int y_pos = lrintf(vertex.position.y - offset + 0.5f);
 		Graphics::draw_rect(x_pos, y_pos, point_size, point_size, color);
 	}
 }
@@ -697,4 +874,11 @@ uint32 Graphics::apply_intensity(const uint32& color, const float& intensity)
 		          ((uint32)(b + 0.5f) << 0) |
 		          ((uint32)(a + 0.5f) << 24));
 	return out;
+}
+
+bool Graphics::is_top_left(const glm::ivec2& a, const glm::ivec2& b)
+{
+	bool is_top = (a.y == b.y) && (a.x < b.x);
+	bool is_left = a.y > b.y;
+	return is_top || is_left;
 }

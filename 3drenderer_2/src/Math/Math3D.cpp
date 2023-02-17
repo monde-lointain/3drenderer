@@ -1,8 +1,6 @@
 #include "Math3D.h"
 
-#include "../Mesh/Mesh.h"
 #include "../Renderer/Camera.h"
-#include "../Renderer/Gizmo.h"
 #include "../Renderer/Viewport.h"
 #include "../Utils/math_helpers.h"
 #include <tracy/tracy/Tracy.hpp>
@@ -84,7 +82,7 @@ void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
 	to_screen_space(point, viewport, camera);
 }
 
-int Math3D::orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c)
+int Math3D::orient2d_i(const glm::ivec2& a, const glm::ivec2& b, const glm::ivec2& c)
 {
 	int signed_area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	// TODO: Flip the sign of the signed area based on the winding order of
@@ -92,8 +90,7 @@ int Math3D::orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c)
 	return signed_area;
 }
 
-float Math3D::orient2d_f(
-	const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
+float Math3D::orient2d_f(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
 {
 	float signed_area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 	// See comment for orient2d_i

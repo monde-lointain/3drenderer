@@ -4,8 +4,13 @@
 #include "../Logger/Logger.h"
 #include "../Utils/3d_types.h"
 #include "../Utils/string_ops.h"
-#include <SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
+
+#ifdef _MSC_VER // Windows
+#include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 Camera::Camera(glm::vec3 position, rot3 rotation)
 	: Entity(glm::vec3(1.0f), rotation, position)

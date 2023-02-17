@@ -1,6 +1,5 @@
 #pragma once
 
-#include "3d_vector.h"
 #include "Rotator.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/vec2.hpp>
@@ -8,7 +7,6 @@
 #include <memory>
 
 struct Camera;
-struct Mesh;
 struct rot3;
 struct Viewport;
 
@@ -26,7 +24,6 @@ namespace Math3D
 	void to_ndc(glm::vec4& point, float& one_over_w);
 	void to_screen_space(
 		glm::vec4& point, std::shared_ptr<Viewport> viewport, const Camera& camera);
-	int orient2d_i(const vec2i& a, const vec2i& b, const vec2i& c);
-	float orient2d_f(
-		const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
+	int orient2d_i(const glm::ivec2& a, const glm::ivec2& b, const glm::ivec2& c);
+	float orient2d_f(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
 };

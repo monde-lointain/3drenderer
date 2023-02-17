@@ -83,7 +83,7 @@ void World::update()
 
 void World::destroy()
 {
-	// Don't need to destroy the camera, gizmo and light because of RAII. Or any 
+	// Don't need to destroy the camera, gizmo and light because of RAII.
 	for (Mesh*& mesh : meshes)
 	{
 		delete mesh;
@@ -151,22 +151,19 @@ void World::transform_mesh(Mesh* mesh)
 		// Initialize the new triangle
 		Triangle transformed_triangle = triangle;
 
-		// Transform the vertices by the model matrix
-		for (glm::vec4& vertex : transformed_triangle.vertices)
+		for (Vertex& vertex : transformed_triangle.vertices)
 		{
-			Math3D::transform_point(vertex, mesh->transform); // TODO: make these into mesh class member functions?
-		}	
-		// Rotate the vertex normals by the model matrix
-		for (glm::vec3& normal : transformed_triangle.normals)
-		{
-			Math3D::rotate_normal(normal, mesh->transform); // TODO: make these into mesh class member functions?
+			// Transform the vertices by the model matrix
+			Math3D::transform_point(vertex.position, mesh->transform); // TODO: make these into mesh class member functions?
+			// Rotate the vertex normals by the model matrix
+			Math3D::rotate_normal(vertex.normal, mesh->transform);
 		}
 
 		// This needs to happen after the mesh is transformed by the model matrix, but before it gets transformed by the camera matrix
 		// Compute the lighting in world space (camera direction is never transformed by the view matrix)
 		// Compute the face normal of the triangle
-		glm::vec3 ab = glm::vec3(triangle.vertices[1] - triangle.vertices[0]);
-		glm::vec3 ca = glm::vec3(triangle.vertices[2] - triangle.vertices[0]);
+		glm::vec3 ab = glm::vec3(triangle.vertices[1].position - triangle.vertices[0].position);
+		glm::vec3 ca = glm::vec3(triangle.vertices[2].position - triangle.vertices[0].position);
 		glm::vec3 face_normal = glm::cross(ab, ca);
 		face_normal = glm::normalize(face_normal);
 		// Rotate the face normal
@@ -180,27 +177,23 @@ void World::transform_mesh(Mesh* mesh)
 		transformed_triangle.flat_value = intensity;
 
 		// Compute the intensity for each vertex
-		float v0_intensity = -glm::dot(transformed_triangle.normals[0], light_direction);
-		float v1_intensity = -glm::dot(transformed_triangle.normals[1], light_direction);
-		float v2_intensity = -glm::dot(transformed_triangle.normals[2], light_direction);
+		float v0_intensity = -glm::dot(transformed_triangle.vertices[0].normal, light_direction);
+		float v1_intensity = -glm::dot(transformed_triangle.vertices[1].normal, light_direction);
+		float v2_intensity = -glm::dot(transformed_triangle.vertices[2].normal, light_direction);
 		// Map intensity values from [-1, 1] to [0, 1]
 		v0_intensity = (v0_intensity + 1.0f) * 0.5f;
 		v1_intensity = (v1_intensity + 1.0f) * 0.5f;
 		v2_intensity = (v2_intensity + 1.0f) * 0.5f;
-		transformed_triangle.gouraud[0] = v0_intensity;
-		transformed_triangle.gouraud[1] = v1_intensity;
-		transformed_triangle.gouraud[2] = v2_intensity;
+		transformed_triangle.vertices[0].gouraud = v0_intensity;
+		transformed_triangle.vertices[1].gouraud = v1_intensity;
+		transformed_triangle.vertices[2].gouraud = v2_intensity;
 		
-		// Transform the vertices by the view matrix
-		for (glm::vec4& vertex : transformed_triangle.vertices)
+		for (Vertex& vertex : transformed_triangle.vertices)
 		{
-			Math3D::transform_point(vertex, camera.view_matrix); // TODO: make these into mesh class member functions?
-		}
-
-		// Rotate the vertex normals by the view matrix
-		for (glm::vec3& vertex_normal : transformed_triangle.normals)
-		{
-			Math3D::rotate_normal(vertex_normal, camera.view_matrix); // TODO: make these into mesh class member functions?
+			// Transform the vertices by the view matrix
+			Math3D::transform_point(vertex.position, camera.view_matrix);
+			// Rotate the vertex normals by the view matrix
+			Math3D::rotate_normal(vertex.normal, camera.view_matrix);
 		}
 
 		// Add the transformed triangle to the bin of triangles to be rendered
@@ -243,28 +236,28 @@ void World::transform_lines()
 	//Logger::info(LOG_CATEGORY_LIGHT, "Light model-view matrix:\n" + mat4_to_string(mv_mat));
 }
 
-void World::compute_face_normal(Triangle& triangle)
-{
-	glm::vec3 ab = glm::vec3(triangle.vertices[1] - triangle.vertices[0]);
-	glm::vec3 ca = glm::vec3(triangle.vertices[2] - triangle.vertices[0]);
-	glm::vec3 normal = glm::cross(ab, ca);
-	normal = glm::normalize(normal);
-	triangle.face_normal = normal;
-}
+//void World::compute_face_normal(Triangle& triangle)
+//{
+//	glm::vec3 ab = glm::vec3(triangle.vertices[1] - triangle.vertices[0]);
+//	glm::vec3 ca = glm::vec3(triangle.vertices[2] - triangle.vertices[0]);
+//	glm::vec3 normal = glm::cross(ab, ca);
+//	normal = glm::normalize(normal);
+//	triangle.face_normal = normal;
+//}
 
-void World::compute_light_intensity(Triangle& triangle)
-{
-	glm::vec3 light_direction = light.direction;
-	// Compute the intensity for each face
-	glm::vec3 face_normal = triangle.face_normal;
-	float intensity = -glm::dot(face_normal, light_direction);
-	triangle.flat_value = intensity;
-
-	// Compute the intensity for each vertex
-	float v0_intensity = -glm::dot(triangle.normals[0], light_direction);
-	float v1_intensity = -glm::dot(triangle.normals[1], light_direction);
-	float v2_intensity = -glm::dot(triangle.normals[2], light_direction);
-	triangle.gouraud[0] = v0_intensity;
-	triangle.gouraud[1] = v1_intensity;
-	triangle.gouraud[2] = v2_intensity;
-}
+//void World::compute_light_intensity(Triangle& triangle)
+//{
+//	glm::vec3 light_direction = light.direction;
+//	// Compute the intensity for each face
+//	glm::vec3 face_normal = triangle.face_normal;
+//	float intensity = -glm::dot(face_normal, light_direction);
+//	triangle.flat_value = intensity;
+//
+//	// Compute the intensity for each vertex
+//	float v0_intensity = -glm::dot(triangle.normals[0], light_direction);
+//	float v1_intensity = -glm::dot(triangle.normals[1], light_direction);
+//	float v2_intensity = -glm::dot(triangle.normals[2], light_direction);
+//	triangle.gouraud[0] = v0_intensity;
+//	triangle.gouraud[1] = v1_intensity;
+//	triangle.gouraud[2] = v2_intensity;
+//}

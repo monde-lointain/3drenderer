@@ -1,8 +1,12 @@
 #include "Application.h"
+
+#ifdef _MSC_VER
 #include <crtdbg.h>
+#endif
 
 int main(int argc, char* args[])
 {
+#ifdef _MSC_VER
 	// Setup the CRT automated memory leak checker
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Send all reports to STDOUT
@@ -12,6 +16,7 @@ int main(int argc, char* args[])
 	// Set this to the allocation number given by the leak checker to break at
 	// it
 	//_CrtSetBreakAlloc(863);
+#endif
 
 	// Need to put braces here to contain the scope!
 	{
@@ -22,8 +27,10 @@ int main(int argc, char* args[])
 		app.destroy();
 	}
 
+#ifdef _MSC_VER
 	// Perform the leak check
 	_CrtDumpMemoryLeaks();
+#endif
 
 	return 0;
 }

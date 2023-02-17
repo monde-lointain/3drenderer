@@ -7,8 +7,13 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_sdlrenderer.h>
-#include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
+
+#ifdef _MSC_VER // Windows
+#include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 void GUI::initialize(std::shared_ptr<Window> app_window, std::shared_ptr<World> app_world)
 {

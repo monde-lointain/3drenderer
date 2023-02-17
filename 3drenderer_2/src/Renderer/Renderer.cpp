@@ -2,13 +2,20 @@
 
 #include "Viewport.h"
 #include "../Math/Math3D.h"
-#include "../Mesh/Triangle.h"
+#include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/math_helpers.h"
 #include "../Window/Window.h"
 #include "../World/World.h"
-#include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
+#include <omp.h>
+#include <thread>
+
+#ifdef _MSC_VER // Windows
+#include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 constexpr int MAX_TRIANGLES = 100000;
 
@@ -25,8 +32,8 @@ void Renderer::initialize(std::shared_ptr<Window> app_window,
 	graphics->init(window->renderer, viewport);
 	graphics->initialize_framebuffer();
 
-	render_mode = SOLID;
-	shading_mode = FLAT;
+	render_mode = TEXTURED_WIREFRAME;
+	shading_mode = GOURAUD;
 	display_face_normals = false;
 	backface_culling = true;
 
@@ -43,7 +50,7 @@ void Renderer::render()
 {
 	ZoneScoped; // for tracy
 
-	graphics->clear_framebuffer(Colors::BLACK);
+	graphics->clear_framebuffer(Colors::BLUE);
 	graphics->clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -75,7 +82,7 @@ void Renderer::render_triangles_in_scene()
 		for (int i = 0; i < num_vertices; i++)
 		{
 			// Transform the point from camera space to clip space
-			Math3D::project(triangle.vertices[i], world->camera.projection_matrix);
+			Math3D::project(triangle.vertices[i].position, world->camera.projection_matrix);
 		}
 	}
 
@@ -88,8 +95,12 @@ void Renderer::render_triangles_in_scene()
 
 	ZoneNamedN(rasterize_triangles_scope, "Rasterization", true); // for tracy
 
-#pragma omp parallel
-#pragma omp for schedule(dynamic,10) // give each thread ten triangles at a time
+// Set the number of threads to execute to the total number of physical cores on
+// the machine, plus one. Note that this function assumes that the PC has two
+// logical cores per physical core
+#pragma omp parallel num_threads((std::thread::hardware_concurrency() / 2) + 1)
+// Give each thread ten triangles at a time
+#pragma omp for schedule(dynamic,10)
 	for (int i = 0; i < num_triangles_to_rasterize; i++)
 	{
 		ZoneNamedN(render_triangle_scope, "Render triangle", true); // for tracy
@@ -101,14 +112,15 @@ void Renderer::render_triangles_in_scene()
 		for (int j = 0; j < num_vertices; j++)
 		{
 			// Store 1/w for later use
-			triangle.inv_w[j] = is_nearly_zero(triangle.vertices[j].w)
-									? 1.0f
-									: 1.0f / triangle.vertices[j].w;
+			triangle.vertices[j].position.w =
+				is_nearly_zero(triangle.vertices[j].position.w)
+					? 1.0f
+					: 1.0f / triangle.vertices[j].position.w;
 			// Perform perspective divide
-			Math3D::to_ndc(triangle.vertices[j], triangle.inv_w[j]);
+			Math3D::to_ndc(triangle.vertices[j].position, triangle.vertices[j].position.w);
 			// Scale into view
 			Math3D::to_screen_space(
-				triangle.vertices[j], viewport, world->camera);
+				triangle.vertices[j].position, viewport, world->camera);
 		}
 
 		// Perform backface culling
@@ -229,9 +241,9 @@ void Renderer::draw_face_normal(const Triangle& triangle)
 {
 	// Compute the points in 3D space to draw the lines
 	float normal_length = 0.1f;
-	glm::vec4 a(triangle.vertices[0]);
-	glm::vec4 b(triangle.vertices[1]);
-	glm::vec4 c(triangle.vertices[2]);
+	glm::vec4 a(triangle.vertices[0].position);
+	glm::vec4 b(triangle.vertices[1].position);
+	glm::vec4 c(triangle.vertices[2].position);
 	glm::vec4 center = glm::vec4((a + b + c) / 3.0f);
 	glm::vec4 end = center;
 	end.x += (triangle.face_normal.x * normal_length);

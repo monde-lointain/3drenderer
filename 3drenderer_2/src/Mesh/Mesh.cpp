@@ -1,12 +1,17 @@
 #include "Mesh.h"
 
 #define FAST_OBJ_IMPLEMENTATION
-#include "Triangle.h"
+#include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/debug_helpers.h"
-#include <SDL_image.h>
 #include <fast_obj/fast_obj.h>
 #include <iostream>
+
+#ifdef _MSC_VER // Windows
+#include <SDL_image.h>
+#else // Linux
+#include <SDL2/SDL_image.h>
+#endif
 
 Mesh::Mesh(glm::vec3 scale, rot3 rotation, glm::vec3 translation)
 	: Entity(scale, rotation, translation)
@@ -62,17 +67,17 @@ void Mesh::load_from_obj(const char* filename)
 			{
 				fastObjIndex index = fast_mesh->indices[object.index_offset + idx];
 
-				triangle.vertices[k] = glm::vec4(
+				triangle.vertices[k].position = glm::vec4(
 					fast_mesh->positions[3 * index.p + 0],
 					fast_mesh->positions[3 * index.p + 1],
 					fast_mesh->positions[3 * index.p + 2],
 					1.0f
 				);
-				triangle.texcoords[k] = {
+				triangle.vertices[k].uv = {
 					fast_mesh->texcoords[2 * index.t + 0],
 					fast_mesh->texcoords[2 * index.t + 1]
 				};
-				triangle.normals[k] = glm::vec3(
+				triangle.vertices[k].normal = glm::vec3(
 					fast_mesh->normals[3 * index.n + 0],
 					fast_mesh->normals[3 * index.n + 1],
 					fast_mesh->normals[3 * index.n + 2]

@@ -535,7 +535,7 @@
     <ClCompile Include="src\Clipping\Clipper.cpp" />
     <ClCompile Include="src\Math\Rotator.cpp" />
     <ClCompile Include="src\Mesh\tex2.cpp" />
-    <ClCompile Include="src\Mesh\Triangle.cpp" />
+    <ClCompile Include="src\Triangle\Triangle.cpp" />
     <ClCompile Include="src\Renderer\Gizmo.cpp" />
     <ClCompile Include="src\Math\Math3D.cpp" />
     <ClCompile Include="src\Renderer\Camera.cpp" />
@@ -569,10 +569,9 @@
     <ClInclude Include="src\Clipping\Clipper.h" />
     <ClInclude Include="src\Math\Rotator.h" />
     <ClInclude Include="src\Misc\3d_algorithm.h" />
-    <ClInclude Include="src\Math\3d_vector.h" />
     <ClInclude Include="src\Renderer\Gizmo.h" />
     <ClInclude Include="src\Math\Math3D.h" />
-    <ClInclude Include="src\Mesh\Triangle.h" />
+    <ClInclude Include="src\Triangle\Triangle.h" />
     <ClInclude Include="src\Renderer\Camera.h" />
     <ClInclude Include="src\Mesh\Mesh.h" />
     <ClInclude Include="libs\fast_obj.h" />
@@ -832,6 +831,7 @@
     <ClInclude Include="src\Utils\string_ops.h" />
     <ClInclude Include="src\Window\Window.h" />
     <ClInclude Include="src\World\World.h" />
+    <ClInclude Include="src\Triangle\Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\glm\detail\func_common.inl" />

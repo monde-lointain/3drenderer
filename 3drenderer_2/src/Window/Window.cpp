@@ -1,7 +1,12 @@
 #include "Window.h"
 
 #include "../Renderer/Viewport.h"
+
+#ifdef _MSC_VER // Windows
 #include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 void Window::initialize(std::shared_ptr<Viewport> app_viewport)
 {

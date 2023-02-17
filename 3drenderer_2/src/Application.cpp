@@ -6,9 +6,14 @@
 #include "Renderer/Viewport.h"
 #include "Window/Window.h"
 #include "World/World.h"
-#include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
 #include <iostream>
+
+#ifdef _MSC_VER // Windows
+#include <SDL.h>
+#else // Linux
+#include <SDL2/SDL.h>
+#endif
 
 Application::Application()
 {

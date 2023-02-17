@@ -3,6 +3,7 @@
 #include "../Renderer/ShadingMode.h"
 #include "../Utils/3d_types.h"
 #include "../Utils/Colors.h"
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
 
@@ -43,6 +44,7 @@ struct Graphics
 	void draw_vertices(const Triangle& triangle, int point_size, const uint32& color);
 	void draw_gizmo(const Gizmo& gizmo);
 	bool is_in_viewport(int x, int y);
+	bool is_top_left(const glm::ivec2& a, const glm::ivec2& b);
 	uint32 get_zbuffer_color(float val);
 	uint32 apply_intensity(const uint32& color, const float& intensity);
 
@@ -52,5 +54,3 @@ struct Graphics
 	float* depth_buffer = nullptr;
 	SDL_Renderer* renderer;
 };
-
-

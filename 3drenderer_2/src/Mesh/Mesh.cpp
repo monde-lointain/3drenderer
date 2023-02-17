@@ -4,8 +4,8 @@
 #include "Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/debug_helpers.h"
-#include <fast_obj.h>
 #include <SDL_image.h>
+#include <fast_obj/fast_obj.h>
 #include <iostream>
 
 Mesh::Mesh(glm::vec3 scale, rot3 rotation, glm::vec3 translation)

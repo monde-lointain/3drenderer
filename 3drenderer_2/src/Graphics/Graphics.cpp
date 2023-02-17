@@ -1,6 +1,7 @@
 #include "Graphics.h"
 
 #include "GUI.h"
+#include "../Logger/Logger.h"
 #include "../Math/3d_vector.h"
 #include "../Math/Math3D.h"
 #include "../Mesh/Texture.h"
@@ -8,148 +9,56 @@
 #include "../Utils/Colors.h"
 #include "../Utils/debug_helpers.h"
 #include "../Renderer/Gizmo.h"
+#include "../Renderer/Renderer.h"
+#include "../Renderer/Viewport.h"
 #include <glm/vec2.hpp>
 #include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
+#include <vectorclass/vectorclass.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <limits>
-#include <memory>
-
-static SDL_Window* window = nullptr;
-static SDL_Renderer* renderer = nullptr;
-
-Viewport Graphics::viewport = { 1920, 1080, "3D Renderer" };
-
-std::unique_ptr<GUI> gui = std::make_unique<GUI>();
-
-static uint32* framebuffer = nullptr;
-static SDL_Texture* framebuffer_texture = nullptr;
-
-static float* depth_buffer = nullptr;
-
-int window_x;
-int window_y;
-int mouse_x;
-int mouse_y;
-bool is_dragging = false;
-
-bool Graphics::initialize_window()
-{
-	// Initialize SDL
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			viewport.name.c_str(),
-			"Error initializing SDL.",
-			nullptr);
-		return false;
-	}
-
-	// Create the window
-	window = SDL_CreateWindow(viewport.name.c_str(),
-		                      SDL_WINDOWPOS_CENTERED,
-		                      SDL_WINDOWPOS_CENTERED,
-		                      viewport.width,
-		                      viewport.height,
-		                      SDL_WINDOW_BORDERLESS);
-
-	if (!window)
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			                     viewport.name.c_str(),
-			                     "Error creating SDL window.",
-			                     nullptr);
-		return false;
-	}
-
-	// Create the SDL renderer
-	renderer = SDL_CreateRenderer(window,
-		                          -1,
-		                          SDL_RENDERER_ACCELERATED |
-		                          SDL_RENDERER_PRESENTVSYNC |
-		                          SDL_RENDERER_TARGETTEXTURE);
-
-	if (!renderer)
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			                     viewport.name.c_str(),
-			                     "Error creating SDL renderer.",
-			                     nullptr);
-		return false;
-	}
-
-	// Create the GUI
-	if (!gui->init(window, renderer))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, 
-			                     viewport.name.c_str(),
-			                     "Error initializing ImGui with SDL renderer.", 
-			                     nullptr);
-		return false;
-	}
-
-	return true;
-}
-
-void Graphics::window_clicked(SDL_Event& event)
-{
-	//SDL_SetRelativeMouseMode(SDL_TRUE);
-	//SDL_GetWindowPosition(window, &window_x, &window_y);
-	//mouse_x = event.button.x;
-	//mouse_y = event.button.y;
-	//is_dragging = true;
-}
-
-void Graphics::window_released()
-{
-	//SDL_SetRelativeMouseMode(SDL_FALSE);
-	//is_dragging = false;
-}
-
-void Graphics::drag_window(SDL_Event& event)
-{
-	//if (is_dragging) {
-	//	int new_x = window_x + event.motion.x - mouse_x;
-	//	int new_y = window_y + event.motion.y - mouse_y;
-	//	SDL_SetWindowPosition(window, new_x, new_y);
-	//}
-}
 
 void Graphics::initialize_framebuffer()
 {
-	framebuffer = new uint32[viewport.width * viewport.height];
+	framebuffer = new uint32[viewport->width * viewport->height];
 	assert(framebuffer);
 
 	framebuffer_texture = SDL_CreateTexture(
 		renderer,
-		SDL_PIXELFORMAT_BGRA8888,
+		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
-		viewport.width,
-		viewport.height
+		viewport->width,
+		viewport->height
 	);
 	assert(framebuffer_texture);
 
-	depth_buffer = new float[viewport.width * viewport.height];
+	depth_buffer = new float[viewport->width * viewport->height];
 	assert(framebuffer);
+}
+
+void Graphics::init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
+{
+	renderer = app_renderer;
+	viewport = app_viewport;
 }
 
 void Graphics::clear_framebuffer(const uint32& color)
 {
 	ZoneScoped; // for tracy
 
-	int i;
-	int size = viewport.width * viewport.height;
-	int loop_count = size / 8;
+	size_t i;
+	size_t size = (size_t)viewport->width * viewport->height;
+	size_t loop_count = size / 8;
 
 	// Set up a register with 8 instances of the same color value
-	__m256i color_vec = _mm256_set1_epi32(color);
+	Vec8ui v(color);
 
 	// Eight pixels at a time until we have less than eight remaining
 	for (i = 0; i < loop_count * 8; i += 8)
 	{
-		_mm256_store_si256((__m256i*)(framebuffer + i), color_vec);
+		v.store(framebuffer + i);
 	}
 
 	// Clear the remaining values in the buffer
@@ -163,19 +72,20 @@ void Graphics::clear_z_buffer()
 {
 	ZoneScoped; // for tracy
 
-	int i;
-	int size = viewport.width * viewport.height;
-	int loop_count = size / 8;
+	size_t i;
+	size_t size = (size_t)viewport->width * viewport->height;
+	size_t loop_count = size / 8;
 
 	constexpr float MAX = std::numeric_limits<float>::max();
+
 	// Set up a register with 8 float values set to the max possible value for a
 	// float. We'll only render pixels if they are in front (less) of this value
-	__m256 max = _mm256_set1_ps(MAX);
+	Vec8f v(MAX);
 
 	// Eight pixels at a time until we have less than eight remaining
 	for (i = 0; i < loop_count * 8; i += 8)
 	{
-		_mm256_store_ps(&depth_buffer[i], max);
+		v.store(&depth_buffer[i]);
 	}
 
 	// Clear the remaining values in the buffer
@@ -192,19 +102,9 @@ void Graphics::update_framebuffer()
 	SDL_UpdateTexture(framebuffer_texture,
 		nullptr,
 		framebuffer,
-		viewport.width * sizeof(uint32));
+		viewport->width * sizeof(uint32));
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, framebuffer_texture, nullptr, nullptr);
-}
-
-void Graphics::gui_process_input(SDL_Event& event)
-{
-	gui->process_input(event);
-}
-
-void Graphics::render_gui()
-{
-	gui->render();
 }
 
 void Graphics::render_frame()
@@ -222,7 +122,7 @@ void Graphics::draw_pixel(const int& x, const int& y, const uint32& color)
 		return;
 	}
 	// Draw the framebuffer starting from the bottom left corner of the screen.
-	int index = viewport.width * (viewport.height - y - 1) + x;
+	int index = viewport->width * (viewport->height - y - 1) + x;
 	framebuffer[index] = color;
 }
 
@@ -335,11 +235,11 @@ void Graphics::draw_line_bresenham_3d(const int& x1, const int& y1,
 	while (true)
 	{
 		// Calculate the index into the z-buffer for this pixel
-		int index = viewport.width * (viewport.height - current_y - 1) + current_x;
+		int index = viewport->width * (viewport->height - current_y - 1) + current_x;
 
 		// Check if the pixel is within the bounds of the screen
-		if (current_x >= 0 && current_x < viewport.width && 
-			current_y >= 0 && current_y < viewport.height)
+		if (current_x >= 0 && current_x < viewport->width && 
+			current_y >= 0 && current_y < viewport->height)
 		{
 			// Is there a faster way to do this?
 			float curr_len =
@@ -409,11 +309,11 @@ void Graphics::draw_line_bresenham_3d_no_zfight(const int& x1, const int& y1,
 	while (true)
 	{
 		// Calculate the index into the z-buffer for this pixel
-		int index = viewport.width * (viewport.height - current_y - 1) + current_x;
+		int index = viewport->width * (viewport->height - current_y - 1) + current_x;
 
 		// Check if the pixel is within the bounds of the screen
-		if (current_x >= 0 && current_x < viewport.width &&
-			current_y >= 0 && current_y < viewport.height)
+		if (current_x >= 0 && current_x < viewport->width &&
+			current_y >= 0 && current_y < viewport->height)
 		{
 			// Is there a faster way to do this?
 			float curr_len =
@@ -464,9 +364,9 @@ void Graphics::draw_wireframe(const Triangle& triangle, const uint32& color)
 {
 	ZoneScoped; // for tracy
 
-	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
-	vec2i b = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
-	vec2i c = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
+	vec2i a = { lrintf(triangle.vertices[0].x), lrintf(triangle.vertices[0].y) };
+	vec2i b = { lrintf(triangle.vertices[1].x), lrintf(triangle.vertices[1].y) };
+	vec2i c = { lrintf(triangle.vertices[2].x), lrintf(triangle.vertices[2].y) };
 	draw_line_bresenham(a.x, a.y, b.x, b.y, color);
 	draw_line_bresenham(b.x, b.y, c.x, c.y, color);
 	draw_line_bresenham(c.x, c.y, a.x, a.y, color);
@@ -476,9 +376,9 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 {
 	ZoneScoped; // for tracy
 
-	vec2i a = { int(triangle.vertices[0].x), int(triangle.vertices[0].y) };
-	vec2i b = { int(triangle.vertices[1].x), int(triangle.vertices[1].y) };
-	vec2i c = { int(triangle.vertices[2].x), int(triangle.vertices[2].y) };
+	vec2i a = { lrintf(triangle.vertices[0].x), lrintf(triangle.vertices[0].y) };
+	vec2i b = { lrintf(triangle.vertices[1].x), lrintf(triangle.vertices[1].y) };
+	vec2i c = { lrintf(triangle.vertices[2].x), lrintf(triangle.vertices[2].y) };
 	float za = triangle.vertices[0].z;
 	float zb = triangle.vertices[1].z;
 	float zc = triangle.vertices[2].z;
@@ -490,7 +390,8 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32& color)
 	draw_line_bresenham_3d_no_zfight(c.x, c.y, zc, nc, a.x, a.y, za, na, color);
 }
 
-void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
+void Graphics::draw_solid(
+	const Triangle& triangle, uint32 color, EShadingMode shading_mode)
 {
 	ZoneScoped; // for tracy
 
@@ -500,18 +401,26 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 	float v0z = triangle.vertices[0].z;
 	float v1z = triangle.vertices[1].z;
 	float v2z = triangle.vertices[2].z;
+	float inv_w0 = triangle.inv_w[0];
+	float inv_w1 = triangle.inv_w[1];
+	float inv_w2 = triangle.inv_w[2];
+	float intensity = triangle.flat_value;
+	float v0_intensity = triangle.gouraud[0];
+	float v1_intensity = triangle.gouraud[1];
+	float v2_intensity = triangle.gouraud[2];
+	uint32 shaded = color;
 
 	// Calculate triangle bounding box
-	int min_x = std::min({ int(v0.x), int(v1.x), int(v2.x) });
-	int max_x = std::max({ int(v0.x), int(v1.x), int(v2.x) });
-	int min_y = std::min({ int(v0.y), int(v1.y), int(v2.y) });
-	int max_y = std::max({ int(v0.y), int(v1.y), int(v2.y) });
+	int min_x = std::min({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+	int max_x = std::max({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+	int min_y = std::min({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
+	int max_y = std::max({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
 
 	// Clip triangle bounding box to screen
 	min_x = std::max(min_x, 0);
-	max_x = std::min(max_x, viewport.width - 1);
+	max_x = std::min(max_x, viewport->width - 1);
 	min_y = std::max(min_y, 0);
-	max_y = std::min(max_y, viewport.height - 1);
+	max_y = std::min(max_y, viewport->height - 1);
 	
 	// Compute the inverse area of the triangle
 	float area = Math3D::orient2d_f(v0, v1, v2);
@@ -540,21 +449,54 @@ void Graphics::draw_solid(const Triangle& triangle, const uint32& color)
 
 				// Check depth against z-buffer and only render if the pixel is
 				// behind (front to back)
-				int index = viewport.width * (viewport.height - y - 1) + x;
+				int index = viewport->width * (viewport->height - y - 1) + x;
 				float current_depth = depth_buffer[index];
 				if (depth >= current_depth) {
 					continue;
 				}
 				depth_buffer[index] = depth;
 
-				// Set pixel color
-				draw_pixel(x, y, color);
+				// Execute the pixel shader
+				switch (shading_mode)
+				{
+					case NONE:
+						// Set pixel color
+						draw_pixel(x, y, shaded);
+						break;
+					case FLAT:
+						shaded = apply_intensity(color, intensity);
+						draw_pixel(x, y, shaded);
+						break;
+					case GOURAUD:
+					{	 
+						// Interpolate 1/w
+						float A = inv_w0 * alpha;
+						float B = inv_w1 * beta;
+						float C = inv_w2 * gamma;
+						float ABC = 1.0f / (A + B + C);
+
+						// Interpolate intensity with interpolated 1/w
+						float pixel_intensity = v0_intensity * alpha
+												+ v1_intensity * beta
+												+ v2_intensity * gamma;
+
+						//// Normalize
+						//pixel_intensity *= ABC;
+
+						// Get the new shaded value
+						shaded = apply_intensity(color, pixel_intensity);
+
+						// Render the pixel
+						draw_pixel(x, y, shaded);
+					}
+					break;
+				}
 			}
 		}
 	}
 }
 
-void Graphics::draw_textured(const Triangle& triangle)
+void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode)
 {
 	ZoneScoped; // for tracy
 
@@ -571,18 +513,22 @@ void Graphics::draw_textured(const Triangle& triangle)
 	float inv_w1 = triangle.inv_w[1];
 	float inv_w2 = triangle.inv_w[2];
 	std::shared_ptr<Texture> texture = triangle.texture;
+	float intensity = triangle.flat_value;
+	float v0_intensity = triangle.gouraud[0];
+	float v1_intensity = triangle.gouraud[1];
+	float v2_intensity = triangle.gouraud[2];
 
 	// Calculate triangle bounding box
-	int min_x = std::min({ int(v0.x), int(v1.x), int(v2.x) });
-	int max_x = std::max({ int(v0.x), int(v1.x), int(v2.x) });
-	int min_y = std::min({ int(v0.y), int(v1.y), int(v2.y) });
-	int max_y = std::max({ int(v0.y), int(v1.y), int(v2.y) });
+	int min_x = std::min({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+	int max_x = std::max({ lrintf(v0.x), lrintf(v1.x), lrintf(v2.x) });
+	int min_y = std::min({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
+	int max_y = std::max({ lrintf(v0.y), lrintf(v1.y), lrintf(v2.y) });
 
 	// Clip triangle bounding box to screen
 	min_x = std::max(min_x, 0);
-	max_x = std::min(max_x, viewport.width - 1);
+	max_x = std::min(max_x, viewport->width - 1);
 	min_y = std::max(min_y, 0);
-	max_y = std::min(max_y, viewport.height - 1);
+	max_y = std::min(max_y, viewport->height - 1);
 
 	// Compute the inverse area of the triangle
 	float area = Math3D::orient2d_f(v0, v1, v2);
@@ -611,7 +557,7 @@ void Graphics::draw_textured(const Triangle& triangle)
 
 				// Check depth against z-buffer and only render if the pixel is
 				// behind (front to back)
-				int index = viewport.width * (viewport.height - y - 1) + x;
+				int index = viewport->width * (viewport->height - y - 1) + x;
 				float current_depth = depth_buffer[index];
 				if (depth >= current_depth) {
 					continue;
@@ -633,10 +579,40 @@ void Graphics::draw_textured(const Triangle& triangle)
 				v *= ABC;
 
 				// Look up texel value and set pixel color
-				int tex_x = abs(int(u * (float)texture->width)) % texture->width;
-				int tex_y = abs(int(v * (float)texture->height)) % texture->height;
+				int tex_x = abs(lrintf(u * (float)texture->width)) % texture->width;
+				int tex_y = abs(lrintf(v * (float)texture->height)) % texture->height;
 				int tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
-				draw_pixel(x, y, texture->pixels[tex_index]);
+				uint32 color = texture->pixels[tex_index];
+
+				// Execute the pixel shader
+				switch (shading_mode)
+				{
+					case NONE:
+						// Set pixel color
+						draw_pixel(x, y, color);
+						break;
+					case FLAT:
+						color = apply_intensity(color, intensity);
+						draw_pixel(x, y, color);
+						break;
+					case GOURAUD:
+					{
+						// Interpolate intensity with interpolated 1/w
+						float pixel_intensity = v0_intensity * alpha
+												+ v1_intensity * beta
+												+ v2_intensity * gamma;
+
+						//// Normalize
+						//pixel_intensity *= ABC;
+
+						// Get the new shaded value
+						color = apply_intensity(color, pixel_intensity);
+
+						// Render the pixel
+						draw_pixel(x, y, color);
+					}
+					break;
+				}
 			}
 		}
 	}
@@ -648,8 +624,8 @@ void Graphics::draw_vertices(
 	float offset = point_size * 0.5f;
 	for (glm::vec4 vertex : triangle.vertices)
 	{
-		int x_pos = int(vertex.x - offset + 0.5f);
-		int y_pos = int(vertex.y - offset + 0.5f);
+		int x_pos = lrintf(vertex.x - offset + 0.5f);
+		int y_pos = lrintf(vertex.y - offset + 0.5f);
 		Graphics::draw_rect(x_pos, y_pos, point_size, point_size, color);
 	}
 }
@@ -658,42 +634,36 @@ void Graphics::draw_gizmo(const Gizmo& gizmo)
 {
 	// x axis
 	draw_line_bresenham(
-		int(gizmo.bases[0].points[0].x), int(gizmo.bases[0].points[0].y),
-		int(gizmo.bases[0].points[1].x), int(gizmo.bases[0].points[1].y),
+		lrintf(gizmo.bases[0].points[0].x), lrintf(gizmo.bases[0].points[0].y),
+		lrintf(gizmo.bases[0].points[1].x), lrintf(gizmo.bases[0].points[1].y),
 		Colors::YELLOW
 	);
 	// y axis
 	draw_line_bresenham(
-		int(gizmo.bases[1].points[0].x), int(gizmo.bases[1].points[0].y),
-		int(gizmo.bases[1].points[1].x), int(gizmo.bases[1].points[1].y),
+		lrintf(gizmo.bases[1].points[0].x), lrintf(gizmo.bases[1].points[0].y),
+		lrintf(gizmo.bases[1].points[1].x), lrintf(gizmo.bases[1].points[1].y),
 		Colors::MAGENTA
 	);
 	// z axis
 	draw_line_bresenham(
-		int(gizmo.bases[2].points[0].x), int(gizmo.bases[2].points[0].y),
-		int(gizmo.bases[2].points[1].x), int(gizmo.bases[2].points[1].y),
+		lrintf(gizmo.bases[2].points[0].x), lrintf(gizmo.bases[2].points[0].y),
+		lrintf(gizmo.bases[2].points[1].x), lrintf(gizmo.bases[2].points[1].y),
 		Colors::CYAN
 	);
 }
 
-void Graphics::close_window()
+void Graphics::free_framebuffer()
 {
 	// Free the resources allocated
 	delete[] framebuffer;
 	delete[] depth_buffer;
 	SDL_DestroyTexture(framebuffer_texture);
-	// Close imgui
-	gui->destroy();
-	// Close SDL
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
 }
 
 bool Graphics::is_in_viewport(int x, int y)
 {
-	bool x_in_viewport = x >= 0 && x < viewport.width;
-	bool y_in_viewport = y >= 0 && y < viewport.height;
+	bool x_in_viewport = x >= 0 && x < viewport->width;
+	bool y_in_viewport = y >= 0 && y < viewport->height;
 	return x_in_viewport && y_in_viewport;
 }
 
@@ -705,4 +675,26 @@ uint32 Graphics::get_zbuffer_color(float val)
 	// Return the 32-bit BGRA value
 	uint32 result = (color << 24) | (color << 16) | (color << 8) | alpha;
 	return result;
+}
+
+uint32 Graphics::apply_intensity(const uint32& color, const float& intensity)
+{
+	// Unpack and convert to float
+	float r = (float)((color >> 16) & 0xFF);
+	float g = (float)((color >> 8) & 0xFF);
+	float b = (float)((color >> 0) & 0xFF);
+	float a = (float)((color >> 24) & 0xFF);
+
+	// Multiply the color channels by the intensity
+	r *= intensity;
+	g *= intensity;
+	b *= intensity;
+	a *= 1.0f; // give the hint to the compiler to vectorize
+
+	// Repack
+	uint32 out = (((uint32)(r + 0.5f) << 16) |
+		          ((uint32)(g + 0.5f) << 8) |
+		          ((uint32)(b + 0.5f) << 0) |
+		          ((uint32)(a + 0.5f) << 24));
+	return out;
 }

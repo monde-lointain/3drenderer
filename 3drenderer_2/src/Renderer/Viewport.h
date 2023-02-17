@@ -1,11 +1,8 @@
 #pragma once
 
-#include <string>
-
 struct Viewport
 {
-	int width;
-	int height;
-	std::string name;
+	int width = 1920;
+	int height = 1080;
 };
 

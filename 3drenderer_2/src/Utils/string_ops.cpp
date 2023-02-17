@@ -3,6 +3,22 @@
 #include <iomanip>
 #include <sstream>
 
+std::string mat4_to_string(const glm::mat4& m, int precision)
+{
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(precision);
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			ss << m[j][i] << "\t";
+		}
+		ss << "\n";
+	}
+	std::string result = ss.str();
+	return result;
+}
+
 std::string vec3_to_string(const glm::vec3& v, int precision)
 {
 	std::stringstream ss;

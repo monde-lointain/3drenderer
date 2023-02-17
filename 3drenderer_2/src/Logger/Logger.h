@@ -13,6 +13,7 @@ enum LogType {
 enum LogCategory {
     LOG_CATEGORY_CAMERA,
     LOG_CATEGORY_CLIPPING,
+    LOG_CATEGORY_LIGHT,
     LOG_CATEGORY_PERF_COUNTER,
 };
 

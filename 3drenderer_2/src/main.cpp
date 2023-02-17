@@ -1,4 +1,5 @@
-#include "Renderer/Renderer.h"
+//#include "Renderer/Renderer.h"
+#include "Application.h"
 #include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
 #include <iostream>
@@ -14,14 +15,19 @@ int main(int argc, char* args[])
 
 	// Set this to the allocation number given by the leak checker to break at
 	// it
-	//_CrtSetBreakAlloc(27951);
+	//_CrtSetBreakAlloc(863);
 
 	// Need to put braces here to contain the scope!
 	{
-		Renderer renderer;
+		//Renderer renderer;
 
-		renderer.run();
-		renderer.destroy();
+		//renderer.run();
+		//renderer.destroy();
+		Application app;
+		
+		app.initialize();
+		app.run();
+		app.destroy();
 	}
 
 	// Perform the leak check

@@ -8,11 +8,9 @@
 #include <SDL_image.h>
 #include <iostream>
 
-Mesh::Mesh()
+Mesh::Mesh(glm::vec3 scale, rot3 rotation, glm::vec3 translation)
+	: Entity(scale, rotation, translation)
 {
-	rotation = glm::vec3(0.0f);
-	scale = glm::vec3(1.0f);
-	translation = glm::vec3(0.0f);
 }
 
 void Mesh::load_from_obj(const char* filename)
@@ -47,8 +45,15 @@ void Mesh::load_from_obj(const char* filename)
 			if (!textures[material_index])
 			{
 				char* material_filename = fast_mesh->materials[material_index].map_Kd.path;
-				std::shared_ptr<Texture> texture = load_texture(material_filename);
-				textures[material_index] = texture;
+				if (material_filename)
+				{
+					std::shared_ptr<Texture> texture = load_texture(material_filename);
+					textures[material_index] = texture;
+				}
+				else
+				{
+					std::cerr << "No textures found for " << filename << ".\n";
+				}
 			}
 
 			triangle.texture = textures[material_index];
@@ -102,30 +107,25 @@ std::shared_ptr<Texture> Mesh::load_texture(const char* filename)
 	}
 
 	// Convert to the pixel format of the renderer
-	surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_BGRA8888, 0);
+	surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
+	// Copy the pixels of the surface over to our struct
 	texture->width = surface->w;
 	texture->height = surface->h;
-	texture->pixels = std::unique_ptr<uint32[]>(new uint32[surface->w * surface->h]);
+	texture->pixels = std::make_unique<uint32[]>(surface->w * surface->h);
 	memcpy(texture->pixels.get(), surface->pixels, surface->w * surface->h * sizeof(uint32));
 
+	// Free the created surface now that we're done with ti
 	SDL_FreeSurface(surface);
 
 	return texture;
 }
 
-void Mesh::rotate(float x, float y, float z)
+void Mesh::rotate(rot3 amount)
 {
-	rotation.x += x;
-	rotation.y += y;
-	rotation.z += z;
-}
-
-void Mesh::mesh_scale(float x, float y, float z)
-{
-	scale.x += x;
-	scale.y += y;
-	scale.z += z;
+	rotation.pitch += amount.pitch; // x
+	rotation.yaw += amount.yaw; // y
+	rotation.roll += amount.roll; // z
 }
 
 int Mesh::num_triangles()

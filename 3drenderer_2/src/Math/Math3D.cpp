@@ -15,12 +15,12 @@ glm::mat4 Math3D::create_projection_matrix(const Camera& camera)
 }
 
 glm::mat4 Math3D::create_world_matrix(
-	glm::vec3 scale, glm::vec3 rotation, glm::vec3 translation)
+	glm::vec3 scale, rot3 rotation, glm::vec3 translation)
 {
 	glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
-	glm::mat4 rotation_x_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::mat4 rotation_y_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 rotation_z_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 rotation_x_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 rotation_y_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation_z_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.roll), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
 	// NOTE: Order matters here! For a left-handed coordinate system these would
 	// happen in the opposite order
@@ -55,11 +55,12 @@ void Math3D::to_ndc(glm::vec4& point, float& one_over_w)
 	point.z *= one_over_w;
 }
 
-void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport, const Camera& camera)
+void Math3D::to_screen_space(
+	glm::vec4& point, std::shared_ptr<Viewport> viewport, const Camera& camera)
 {
 	// Transform the point from clip space to screen space
-	point.x = (point.x + 1.0f) * (float)viewport.width * 0.5f;
-	point.y = (point.y + 1.0f) * (float)viewport.height * 0.5f;
+	point.x = (point.x + 1.0f) * (float)viewport->width * 0.5f;
+	point.y = (point.y + 1.0f) * (float)viewport->height * 0.5f;
 
 	// Normalize the z coordinate [0, 1]
 	//point.z = (point.z * camera.zfar + camera.zfar - point.z * camera.znear + camera.znear) * 0.5f;
@@ -70,7 +71,7 @@ void Math3D::to_screen_space(glm::vec4& point, const Viewport& viewport, const C
 // version of this in Renderer::project_triangle. I should really move that
 // function over to this namespace honestly
 void Math3D::project_point(glm::vec4& point, const glm::mat4& projection_matrix,
-	const Viewport& viewport, const Camera& camera)
+	std::shared_ptr<Viewport> viewport, const Camera& camera)
 {
 	// Transform the point from camera space to clip space
 	project(point, projection_matrix);

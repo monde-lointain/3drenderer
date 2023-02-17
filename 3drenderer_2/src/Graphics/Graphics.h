@@ -1,26 +1,28 @@
 #pragma once
 
+#include "../Renderer/ShadingMode.h"
 #include "../Utils/3d_types.h"
 #include "../Utils/Colors.h"
-#include "../Renderer/Viewport.h"
 #include <glm/vec3.hpp>
+#include <memory>
 
 struct Gizmo;
-union SDL_Event;
+struct SDL_Renderer;
+struct SDL_Texture;
 struct Triangle;
+struct Viewport;
 
-namespace Graphics
+// TODO: This should not be a structure. We don't access these functions
+// anywhere else but from the renderer. It's safe just to keep them as is in
+// their own header file without a separate graphics class
+struct Graphics
 {
-	bool initialize_window();
-	void window_clicked(SDL_Event &event);
-	void window_released();
-	void drag_window(SDL_Event& event);
 	void initialize_framebuffer();
+	void free_framebuffer();
+	void init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport);
 	void clear_framebuffer(const uint32& color);
 	void clear_z_buffer();
 	void update_framebuffer();
-	void gui_process_input(SDL_Event& Event);
-	void render_gui();
 	void render_frame();
 	void draw_pixel(const int& x, const int& y, const uint32& color);
 	void draw_rect(const int& x, const int& y, const int& width,
@@ -36,15 +38,19 @@ namespace Graphics
 		const float& z2, const glm::vec3& n2, const uint32& color);
 	void draw_wireframe(const Triangle& triangle, const uint32& color);
 	void draw_wireframe_3d(const Triangle& triangle, const uint32& color);
-	void draw_solid(const Triangle& triangle, const uint32& color);
-	void draw_textured(const Triangle& triangle);
+	void draw_solid(const Triangle& triangle, uint32 color, EShadingMode shading_mode);
+	void draw_textured(const Triangle& triangle, EShadingMode shading_mode);
 	void draw_vertices(const Triangle& triangle, int point_size, const uint32& color);
 	void draw_gizmo(const Gizmo& gizmo);
-	void close_window();
 	bool is_in_viewport(int x, int y);
 	uint32 get_zbuffer_color(float val);
+	uint32 apply_intensity(const uint32& color, const float& intensity);
 
-	extern Viewport viewport;
+	std::shared_ptr<Viewport> viewport;
+	uint32* framebuffer = nullptr;
+	SDL_Texture* framebuffer_texture = nullptr;
+	float* depth_buffer = nullptr;
+	SDL_Renderer* renderer;
 };
 
 

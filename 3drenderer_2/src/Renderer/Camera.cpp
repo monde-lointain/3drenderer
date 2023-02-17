@@ -1,29 +1,30 @@
 #include "Camera.h"
 
+#include "../Graphics/Graphics.h"
 #include "../Logger/Logger.h"
 #include "../Utils/3d_types.h"
 #include "../Utils/string_ops.h"
 #include <SDL.h>
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera()
+Camera::Camera(glm::vec3 position, rot3 rotation)
+	: Entity(glm::vec3(1.0f), rotation, position)
 {
-	position = glm::vec3(0.0f);
-	direction = glm::vec3(0.0f, 0.0f, 0.0f);
-	world_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	up = world_up;
-	right = glm::vec3(1.0f, 0.0f, 0.0f);
-	speed = 0.1f;
-	move_state = NOT_MOVING;
-	rotation.roll = 0.0f;
-	rotation.yaw = -90.0f;
-	rotation.pitch = 0.0f;
-	fov = 0.0f;
-	aspect = 0.0f;
-	znear = 0.0f;
-	zfar = 0.0f;
-	mouse_sensitivity = 0.1f;
-	input_mode = MOUSE_INPUT_DISABLED;
+	this->direction = glm::vec3(0.0f, 0.0f, 0.0f);
+	this->move_direction = direction;
+	this->world_up = glm::vec3(0.0f, 1.0f, 0.0f);
+	this->up = world_up;
+	this->right = glm::vec3(1.0f, 0.0f, 0.0f);
+	this->speed = 0.1f;
+	this->move_state = NOT_MOVING;
+	this->fov = 0.0f;
+	this->aspect = 0.0f;
+	this->znear = 0.0f;
+	this->zfar = 0.0f;
+	this->mouse_sensitivity = 0.15f;
+	this->window_clicked = false;
+	this->mouse_has_position = false;
+	this->input_mode = MOUSE_INPUT_DISABLED;
 }
 
 void Camera::update()
@@ -32,8 +33,9 @@ void Camera::update()
 	update_position();
 
 	// Logging
-	Logger::info(LOG_CATEGORY_CAMERA, "Camera position: " + vec3_to_string(position));
+	Logger::info(LOG_CATEGORY_CAMERA, "Camera position: " + vec3_to_string(translation));
 	Logger::info(LOG_CATEGORY_CAMERA, "Camera rotation: " + rotation.to_string());
+	Logger::info(LOG_CATEGORY_CAMERA, "Camera speed: " + std::to_string(speed));
 }
 
 void Camera::process_mouse_movement()
@@ -46,7 +48,19 @@ void Camera::process_mouse_movement()
 
 	// Get the x and y coordinates of the mouse
 	int x, y;
+
 	SDL_GetRelativeMouseState(&x, &y);
+
+	// Set the mouse focus manually when the window is first clicked
+	if (window_clicked && !mouse_has_position)
+	{
+		SDL_GetRelativeMouseState(&x, &y);
+		x = 0;
+		y = 0;
+		mouse_has_position = true;
+	}
+
+	// Adjust to be relative to the center of the window
 	float xoffset = (float)x * mouse_sensitivity;
 	float yoffset = (float)y * mouse_sensitivity;
 
@@ -58,12 +72,16 @@ void Camera::process_mouse_movement()
 	// Clamp the pitch so we can't rotate the camera backwards
 	rotation.pitch = glm::clamp(rotation.pitch, -89.0f, 89.0f);
 
+	//Logger::info(LOG_CATEGORY_CAMERA, "mouse x: " + std::to_string(x));
+	//Logger::info(LOG_CATEGORY_CAMERA, "mouse y: " + std::to_string(y));
+	//Logger::info(LOG_CATEGORY_CAMERA, "x offset: " + std::to_string(xoffset));
+	//Logger::info(LOG_CATEGORY_CAMERA, "y offset: " + std::to_string(yoffset));
+
 	update_camera_vectors();
 }
 
 void Camera::update_camera_vectors()
 {
-
 	float yaw = glm::radians(rotation.yaw);
 	float pitch = glm::radians(rotation.pitch);
 	glm::vec3 front(0.0f);
@@ -85,22 +103,28 @@ void Camera::update_position()
 
 	glm::vec3 move_dir(0.0f);
 
-	if (move_state & FORWARD) {
+	if (move_state & FORWARD)
+	{
 		move_dir += direction;
 	}
-	if (move_state & BACKWARD) {
+	if (move_state & BACKWARD)
+	{
 		move_dir -= direction;
 	}
-	if (move_state & RIGHT) {
+	if (move_state & RIGHT)
+	{
 		move_dir += right;
 	}
-	if (move_state & LEFT) {
+	if (move_state & LEFT)
+	{
 		move_dir -= right;
 	}
-	if (move_state & UP) {
+	if (move_state & UP)
+	{
 		move_dir += world_up;
 	}
-	if (move_state & DOWN) {
+	if (move_state & DOWN)
+	{
 		move_dir -= world_up;
 	}
 
@@ -115,15 +139,38 @@ void Camera::update_position()
 
 	move_direction = glm::normalize(move_dir);
 
-	position += move_direction * speed;
+	translation += move_direction * speed;
 }
 
 void Camera::set_move_state(EMovementState state, bool set)
 {
-	if (set) {
+	if (set)
+	{
 		move_state |= state;
 	}
-	else {
+	else
+	{
 		move_state &= ~state;
+	}
+}
+
+void Camera::set_view()
+{
+	glm::vec3 target = translation + direction;
+	view_matrix = glm::lookAt(translation, target, world_up);
+}
+
+void Camera::set_projection(ProjectionMode mode)
+{
+	// Set perspective
+	if (mode & PERSPECTIVE)
+	{
+		projection_mode |= PERSPECTIVE;
+		projection_matrix = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	}
+	if (mode & ORTHOGRAPHIC)
+	{
+		projection_mode |= ORTHOGRAPHIC;
+		projection_matrix = glm::ortho(-ortho_dist * aspect, ortho_dist * aspect, -ortho_dist, ortho_dist, znear, zfar);
 	}
 }

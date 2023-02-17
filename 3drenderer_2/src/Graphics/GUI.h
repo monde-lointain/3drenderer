@@ -1,21 +1,21 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 struct LogEntry;
+struct Window;
+struct World;
 union SDL_Event;
-struct SDL_Window;
-struct SDL_Renderer;
 
 struct GUI
 {
-	GUI() = default;
-	~GUI() = default;
+	std::shared_ptr<Window> window;
+	std::shared_ptr<World> world;
 
-	bool init(SDL_Window* window, SDL_Renderer* renderer);
+	void initialize(std::shared_ptr<Window> app_window, std::shared_ptr<World> app_world);
 	void process_input(SDL_Event &event);
 	void render();
 	void print_log_messages(std::vector<LogEntry>& log);
 	void destroy();
 };
-

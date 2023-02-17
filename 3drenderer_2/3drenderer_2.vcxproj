@@ -250,12 +250,13 @@
       <TreatWChar_tAsBuiltInType />
       <ForceConformanceInForLoopScope />
       <RemoveUnreferencedCodeData />
-      <CallingConvention />
       <ErrorReporting />
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OpenMPSupport>true</OpenMPSupport>
+      <OmitFramePointers>true</OmitFramePointers>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -308,12 +309,14 @@
       <TreatWChar_tAsBuiltInType />
       <ForceConformanceInForLoopScope />
       <RemoveUnreferencedCodeData />
-      <CallingConvention />
       <ErrorReporting />
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OpenMPSupport>true</OpenMPSupport>
+      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
+      <OmitFramePointers>true</OmitFramePointers>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -380,14 +383,14 @@
       </ForceConformanceInForLoopScope>
       <RemoveUnreferencedCodeData>
       </RemoveUnreferencedCodeData>
-      <CallingConvention>
-      </CallingConvention>
       <ErrorReporting>
       </ErrorReporting>
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OpenMPSupport>true</OpenMPSupport>
+      <OmitFramePointers>true</OmitFramePointers>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -469,14 +472,14 @@
       </ForceConformanceInForLoopScope>
       <RemoveUnreferencedCodeData>
       </RemoveUnreferencedCodeData>
-      <CallingConvention>
-      </CallingConvention>
       <ErrorReporting>
       </ErrorReporting>
       <AdditionalOptions>/Zo /EHa- %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4100;4127;4189;4201</DisableSpecificWarnings>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OpenMPSupport>true</OpenMPSupport>
+      <OmitFramePointers>true</OmitFramePointers>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -515,6 +518,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Controller\PlayerController.cpp" />
+    <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\Entity\Entity.cpp" />
     <ClCompile Include="libs\imgui\imgui.cpp" />
     <ClCompile Include="libs\imgui\imgui_demo.cpp" />
     <ClCompile Include="libs\imgui\imgui_draw.cpp" />
@@ -523,6 +529,7 @@
     <ClCompile Include="libs\imgui\imgui_tables.cpp" />
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="libs\tracy\TracyClient.cpp" />
+    <ClCompile Include="src\Light\Light.cpp" />
     <ClCompile Include="src\Graphics\GUI.cpp" />
     <ClCompile Include="src\Logger\Logger.cpp" />
     <ClCompile Include="src\Clipping\Clipper.cpp" />
@@ -538,11 +545,15 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Utils\debug_helpers.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
-    <ClCompile Include="src\Renderer\Viewport.cpp" />
     <ClCompile Include="src\Utils\math_helpers.cpp" />
     <ClCompile Include="src\Utils\string_ops.cpp" />
+    <ClCompile Include="src\Window\Window.cpp" />
+    <ClCompile Include="src\World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Controller\PlayerController.h" />
+    <ClInclude Include="src\Application.h" />
+    <ClInclude Include="src\Entity\Entity.h" />
     <ClInclude Include="libs\imgui\imconfig.h" />
     <ClInclude Include="libs\imgui\imgui.h" />
     <ClInclude Include="libs\imgui\imgui_impl_sdl.h" />
@@ -551,6 +562,7 @@
     <ClInclude Include="libs\imgui\imstb_rectpack.h" />
     <ClInclude Include="libs\imgui\imstb_textedit.h" />
     <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Light\Light.h" />
     <ClInclude Include="src\Line\Line3D.h" />
     <ClInclude Include="src\Graphics\GUI.h" />
     <ClInclude Include="src\Logger\Logger.h" />
@@ -806,6 +818,8 @@
     <ClInclude Include="libs\glm\vec4.hpp" />
     <ClInclude Include="libs\glm\vector_relational.hpp" />
     <ClInclude Include="src\Graphics\Graphics.h" />
+    <ClInclude Include="src\Renderer\RenderMode.h" />
+    <ClInclude Include="src\Renderer\ShadingMode.h" />
     <ClInclude Include="src\Utils\3d_types.h" />
     <ClInclude Include="src\Utils\Colors.h" />
     <ClInclude Include="src\Utils\debug_counters.h" />
@@ -816,6 +830,8 @@
     <ClInclude Include="src\Mesh\Texture.h" />
     <ClInclude Include="src\Utils\math_helpers.h" />
     <ClInclude Include="src\Utils\string_ops.h" />
+    <ClInclude Include="src\Window\Window.h" />
+    <ClInclude Include="src\World\World.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\glm\detail\func_common.inl" />

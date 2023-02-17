@@ -15,6 +15,8 @@ struct Triangle
 	glm::vec3 face_normal{};
 	float signed_area{}; // For backface culling
 	uint32 color{}; // for flat-colored triangles
+	float flat_value; // for flat shading
+	float gouraud[3]; // for Gouraud shading
 	float inv_w[3]{}; // 1/w
 	std::shared_ptr<Texture> texture;
 

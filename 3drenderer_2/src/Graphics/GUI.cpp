@@ -1,21 +1,50 @@
 #include "GUI.h"
 
 #include "../Logger/Logger.h"
+#include "../Window/Window.h"
+#include "../World/World.h"
+#include <glm/trigonometric.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_sdlrenderer.h>
 #include <SDL.h>
 #include <tracy/tracy/Tracy.hpp>
 
-bool GUI::init(SDL_Window* window, SDL_Renderer* renderer)
+void GUI::initialize(std::shared_ptr<Window> app_window, std::shared_ptr<World> app_world)
 {
+    window = app_window;
+    world = app_world;
+
     ImGui::CreateContext();
-    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    if (!ImGui_ImplSDLRenderer_Init(renderer))
+
+    if (!ImGui_ImplSDL2_InitForSDLRenderer(window->window, window->renderer))
+	{
+		SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR, 
+            window->name,
+			"Error initializing ImGui for SDL platform layer.", 
+            nullptr
+        );
+
+		ImGui::DestroyContext();
+		window->destroy();
+		exit(1);
+	}
+
+    if (!ImGui_ImplSDLRenderer_Init(window->renderer))
     {
-        return false;
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR,
+            window->name,
+            "Error initializing ImGui for SDL renderer.",
+            nullptr
+        );
+
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+        window->destroy();
+        exit(1);
     }
-    return true;
 }
 
 void GUI::process_input(SDL_Event& event)
@@ -49,10 +78,18 @@ void GUI::render()
     ImGui::End();
 
     // Clip coordinates log window
-    if (ImGui::Begin("Clip coordinates", nullptr, ImGuiWindowFlags_NoCollapse))
+    if (ImGui::Begin("Clip info", nullptr, log_window_flags))
     {
         std::vector<LogEntry>& clip_log = Logger::messages[LOG_CATEGORY_CLIPPING];
         print_log_messages(clip_log);
+    }
+    ImGui::End();
+
+    // Light log window
+    if (ImGui::Begin("Light", nullptr, log_window_flags))
+    {
+        std::vector<LogEntry>& light_log = Logger::messages[LOG_CATEGORY_LIGHT];
+        print_log_messages(light_log);
     }
     ImGui::End();
 
@@ -64,11 +101,54 @@ void GUI::render()
     //}
     //ImGui::End();
 
+    // Light movement controls
+    if (ImGui::Begin("Edit Light", nullptr, log_window_flags))
+    {
+        // Position
+        ImGui::Text("Position");
+        ImGui::Spacing();
+
+        ImGui::DragFloat("position x", &world->light.translation.x, 0.01f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat("position y", &world->light.translation.y, 0.01f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat("position z", &world->light.translation.z, 0.01f, 0.0f, 0.0f, "%.2f");
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // Rotation
+        ImGui::Text("Rotation");
+        ImGui::Spacing();
+
+        static float in_pitch = world->light.rotation.pitch;
+        static float in_yaw = world->light.rotation.yaw;
+        static float in_roll = world->light.rotation.roll;
+
+        ImGui::DragFloat("rotation x", &in_pitch, 0.5f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat("rotation y", &in_yaw, 0.5f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat("rotation z", &in_roll, 0.5f, 0.0f, 0.0f, "%.2f");
+
+        world->light.rotation.pitch = in_pitch;
+        world->light.rotation.yaw = in_yaw;
+        world->light.rotation.roll = in_roll;
+        //ImGui::SliderAngle("slider angle", &angle);
+    }
+    ImGui::End();
+
+    //ImGui::ShowDemoWindow();
+
     ImGui::Render();
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
     // Clear all of the logs in the logger
     Logger::reset();
+}
+
+void GUI::destroy()
+{
+    ImGui_ImplSDLRenderer_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void GUI::print_log_messages(std::vector<LogEntry>& log)
@@ -77,11 +157,4 @@ void GUI::print_log_messages(std::vector<LogEntry>& log)
     {
         ImGui::Text(entry.message.c_str());
     }
-}
-
-void GUI::destroy()
-{
-    ImGui_ImplSDLRenderer_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
 }

@@ -1,4 +1,5 @@
 # 3drenderer
 C++20 software renderer
 
-Libraries used: glm, imgui, SDL, fast_obj, tracy (profiling)
+Libraries used:<br>
+glm, imgui, SDL, fast_obj, tracy (profiling)

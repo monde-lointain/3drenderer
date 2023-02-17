@@ -26,7 +26,7 @@ void Renderer::initialize(std::shared_ptr<Window> app_window,
 	graphics->initialize_framebuffer();
 
 	render_mode = SOLID;
-	shading_mode = GOURAUD;
+	shading_mode = FLAT;
 	display_face_normals = false;
 	backface_culling = true;
 

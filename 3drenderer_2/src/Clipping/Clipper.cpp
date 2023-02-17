@@ -449,54 +449,78 @@ bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane& plane)
 	}
 }
 
+/**
+ * The clip space inequalities are as follows: no points are allowed in that don't satisfy the following:
+ * -w <= x <= w (for the left and right clip planes)
+ * -w <= y <= w (for the bottom and top clip planes)
+ * -w <= z <= w (for the near and far clip planes)
+ * We also want to clip against 0 < w, in order to prevent negative w coordinates from occuring.
+ */
 bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane& plane)
 {
+	bool result;
 	switch (plane)
 	{
-	case NEGATIVE_W_PLANE:
-		return vertex.w >= EPSILON;
-	case RIGHT_PLANE:
-		return vertex.x <= +vertex.w;
-	case LEFT_PLANE:
-		return vertex.x >= -vertex.w;
-	case TOP_PLANE:
-		return vertex.y <= +vertex.w;
-	case BOTTOM_PLANE:
-		return vertex.y >= -vertex.w;
-		// These two are correct. Projection matrix flips positive z from going
-		// out of the screen to going in to it
-	case NEAR_PLANE:
-		return vertex.z >= -vertex.w;
-	case FAR_PLANE:
-		return vertex.z <= +vertex.w;
-	default:
-		assert(0);
-		return 0;
+		case NEGATIVE_W_PLANE:
+			result = vertex.w >= EPSILON;
+			return result;
+		case RIGHT_PLANE:
+			result = vertex.x <= +vertex.w;
+			return result;
+		case LEFT_PLANE:
+			result = vertex.x >= -vertex.w;
+			return result;
+		case TOP_PLANE:
+			result = vertex.y <= +vertex.w;
+			return result;
+		case BOTTOM_PLANE:
+			result = vertex.y >= -vertex.w;
+			return result;
+		// The inequalities for the near and far clip planes here are correct.
+		// The projection matrix flips positive z from going out of the screen
+		// to going in to it
+		case NEAR_PLANE:
+			result = vertex.z >= -vertex.w;
+			return result;
+		case FAR_PLANE:
+			result = vertex.z <= +vertex.w;
+			return result;
+		default:
+			assert(false);
+			return false;
 	}
 }
 
 float Clipper::compute_intersect_ratio(
 	const glm::vec4& curr, const glm::vec4& prev, const EClipPlane& plane)
 {
+	float result;
 	switch (plane)
 	{
-	case NEGATIVE_W_PLANE:
-		return (prev.w - EPSILON) / (prev.w - curr.w);
-	case RIGHT_PLANE:
-		return (prev.w - prev.x) / ((prev.w - prev.x) - (curr.w - curr.x));
-	case LEFT_PLANE:
-		return (prev.w + prev.x) / ((prev.w + prev.x) - (curr.w + curr.x));
-	case TOP_PLANE:
-		return (prev.w - prev.y) / ((prev.w - prev.y) - (curr.w - curr.y));
-	case BOTTOM_PLANE:
-		return (prev.w + prev.y) / ((prev.w + prev.y) - (curr.w + curr.y));
-	case NEAR_PLANE:
-		return (prev.w + prev.z) / ((prev.w + prev.z) - (curr.w + curr.z));
-	case FAR_PLANE:
-		return (prev.w - prev.z) / ((prev.w - prev.z) - (curr.w - curr.z));
-	default:
-		assert(0);
-		return 0;
+		case NEGATIVE_W_PLANE:
+			result = (prev.w - EPSILON) / (prev.w - curr.w);
+			return result;
+		case RIGHT_PLANE:
+			result = (prev.w - prev.x) / ((prev.w - prev.x) - (curr.w - curr.x));
+			return result;
+		case LEFT_PLANE:
+			result = (prev.w + prev.x) / ((prev.w + prev.x) - (curr.w + curr.x));
+			return result;
+		case TOP_PLANE:
+			result = (prev.w - prev.y) / ((prev.w - prev.y) - (curr.w - curr.y));
+			return result;
+		case BOTTOM_PLANE:
+			result = (prev.w + prev.y) / ((prev.w + prev.y) - (curr.w + curr.y));
+			return result;
+		case NEAR_PLANE:
+			result = (prev.w + prev.z) / ((prev.w + prev.z) - (curr.w + curr.z));
+			return result;
+		case FAR_PLANE:
+			result = (prev.w - prev.z) / ((prev.w - prev.z) - (curr.w - curr.z));
+			return result;
+		default:
+			assert(0.0f);
+			return 0.0f;
 	}
 }
 

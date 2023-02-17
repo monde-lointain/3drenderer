@@ -11,7 +11,7 @@ void World::load_level(std::shared_ptr<Viewport> viewport)
 {
 	// TODO: Set the starting camera/light params. Load the starting mesh
 	// Set the camera position
-	camera.translation = glm::vec3(0.0f, 8.0f, 10.0f);
+	camera.translation = glm::vec3(0.0f, 8.0f, 15.0f);
 	camera.rotation.yaw = -90.0f;
 	camera.direction = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.update();
@@ -161,7 +161,6 @@ void World::transform_mesh(Mesh* mesh)
 		{
 			Math3D::rotate_normal(normal, mesh->transform); // TODO: make these into mesh class member functions?
 		}
-
 
 		// This needs to happen after the mesh is transformed by the model matrix, but before it gets transformed by the camera matrix
 		// Compute the lighting in world space (camera direction is never transformed by the view matrix)

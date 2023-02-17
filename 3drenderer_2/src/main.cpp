@@ -1,8 +1,4 @@
-//#include "Renderer/Renderer.h"
 #include "Application.h"
-#include <SDL.h>
-#include <tracy/tracy/Tracy.hpp>
-#include <iostream>
 #include <crtdbg.h>
 
 int main(int argc, char* args[])
@@ -19,10 +15,6 @@ int main(int argc, char* args[])
 
 	// Need to put braces here to contain the scope!
 	{
-		//Renderer renderer;
-
-		//renderer.run();
-		//renderer.destroy();
 		Application app;
 		
 		app.initialize();

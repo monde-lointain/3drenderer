@@ -948,9 +948,11 @@ uint32 Graphics::apply_intensity(const uint32 color, const float intensity)
 	a *= 1.0f; // give the hint to the compiler to vectorize
 
 	// Repack
-	const uint32 out = ((lrintf(r + 0.5f) << 16) | 
-		                (lrintf(g + 0.5f) << 8) | 
-		                (lrintf(b + 0.5f) << 0) | 
-		                (lrintf(a + 0.5f) << 24));
+	const uint32 out = (
+		(lrintf(r + 0.5f) << 16) | 
+		(lrintf(g + 0.5f) << 8) | 
+		(lrintf(b + 0.5f) << 0) | 
+		(lrintf(a + 0.5f) << 24)
+		);
 	return out;
 }

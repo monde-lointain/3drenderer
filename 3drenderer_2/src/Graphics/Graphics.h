@@ -84,7 +84,7 @@ struct Graphics
 		int point_size, 
 		uint32 color
 	) const;
-	void draw_gizmo(const Gizmo& gizmo);
+	void draw_gizmo(const Gizmo& gizmo) const;
 
 	/** Misc. functions */
 	[[nodiscard]] bool is_in_viewport(const glm::ivec2& p) const;

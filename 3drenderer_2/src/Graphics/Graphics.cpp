@@ -891,7 +891,7 @@ void Graphics::draw_vertices(
 	}
 }
 
-void Graphics::draw_gizmo(const Gizmo& gizmo)
+void Graphics::draw_gizmo(const Gizmo& gizmo) const
 {
 	// x axis
 	const glm::ivec2 x_start(lrintf(gizmo.bases[0].points[0].x), lrintf(gizmo.bases[0].points[0].y));

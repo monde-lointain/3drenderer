@@ -5,10 +5,10 @@
 
 #include "RenderMode.h"
 #include "ShadingMode.h"
-#include "../Clipping/Clipper.h"
 #include "../Utils/Constants.h"
 
 struct SDL_Texture;
+struct Triangle;
 struct Viewport;
 struct Window;
 struct World;
@@ -36,10 +36,8 @@ struct Renderer
 	bool display_face_normals;
 	bool backface_culling;
 
-	Clipper clipper;
-
 	void render_triangles_in_scene();
-	void render_lines();
+	void render_lines() const;
 	void rasterize_triangle(Triangle& triangle) const;
 	void draw_face_normal(const Triangle& triangle) const;
 };

@@ -12,7 +12,7 @@
 #include "../Utils/Constants.h"
 #include "../Utils/string_ops.h"
 
-void Clipper::clip_line(Line3D& line)
+void clip_line(Line3D& line)
 {
 	glm::vec4 curr = line.points[0];
 	glm::vec4 prev = line.points[1];
@@ -50,12 +50,13 @@ void Clipper::clip_line(Line3D& line)
 		}
 	}
 
+	// Set the new points on the line once we're done clipping it
 	line.should_render = true;
 	line.points[0] = curr;
 	line.points[1] = prev;
 }
 
-//std::vector<Triangle> Clipper::clip_triangles(std::vector<Triangle>& triangles)
+//std::vector<Triangle> clip_triangles(std::vector<Triangle>& triangles)
 //{
 //	// The collection of triangles created from all triangles after they have
 //	// been clipped
@@ -85,7 +86,7 @@ void Clipper::clip_line(Line3D& line)
 //	return out_triangles;
 //}
 //
-//std::vector<Triangle> Clipper::clip_triangles_to_plane(
+//std::vector<Triangle> clip_triangles_to_plane(
 //	std::vector<Triangle> triangles, const EClipPlane& plane)
 //{
 //	std::vector<Triangle> clip_result;
@@ -207,7 +208,7 @@ void Clipper::clip_line(Line3D& line)
 
 constexpr int MAX_TRIANGLES_PER_CLIP = 50;
 
-void Clipper::clip_triangles(
+void clip_triangles(
 	const std::vector<Triangle>& in_tris,
 	Triangle* out_tris,
 	int& out_tri_count
@@ -267,7 +268,7 @@ void Clipper::clip_triangles(
 	Logger::print(LOG_CATEGORY_CLIPPING, "Out triangles: " + std::to_string(out_tri_count));
 }
 
-void Clipper::clip_triangles_to_plane(
+void clip_triangles_to_plane(
 	Triangle* tmp,
 	const Triangle* tris_current_clip, 
 	int& num_tris_current_clip,
@@ -362,7 +363,7 @@ void Clipper::clip_triangles_to_plane(
 	num_tris_current_clip = num_new_tris;
 }
 
-void Clipper::clip_triangle_to_plane(
+void clip_triangle_to_plane(
 	const Triangle& triangle,
 	EClipPlane plane,
 	glm::vec4* out_verts,
@@ -458,7 +459,7 @@ void Clipper::clip_triangle_to_plane(
 	}
 }
 
-bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane plane)
+bool is_unmodified(const Triangle& triangle, const EClipPlane plane)
 {
 	// Get the clip distance for the current plane for each of the vertices on
 	// the triangle
@@ -481,7 +482,7 @@ bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane plane)
  * We also want to clip against 0 < w, in order to prevent negative w
  * coordinates from occuring.
  */
-bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane plane)
+bool is_inside_plane(const glm::vec4& vertex, const EClipPlane plane)
 {
 	bool result;
 	switch (plane)
@@ -516,7 +517,7 @@ bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane plane)
 	}
 }
 
-float Clipper::compute_intersect_ratio(
+float compute_intersect_ratio(
 	const glm::vec4& a, 
 	const glm::vec4& b, 
 	const EClipPlane plane

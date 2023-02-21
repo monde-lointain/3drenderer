@@ -5,6 +5,7 @@
 #include <omp.h>
 #include <tracy/tracy/Tracy.hpp>
 
+#include "../Clipping/Clipper.h"
 #include "../Graphics/Graphics.h"
 #include "../Math/Math3D.h"
 #include "../Triangle/Triangle.h"
@@ -93,7 +94,7 @@ void Renderer::render_triangles_in_scene()
 
 	int num_triangles_to_rasterize = 0;
 	// Clip all the triangles and stick them in a new array
-	clipper.clip_triangles(
+	clip_triangles(
 		world->triangles_in_scene, 
 		triangles_to_rasterize->data(),
 		num_triangles_to_rasterize
@@ -142,7 +143,7 @@ void Renderer::render_triangles_in_scene()
 	}
 }
 
-void Renderer::render_lines()
+void Renderer::render_lines() const
 {
 
 	// Render each line
@@ -155,7 +156,7 @@ void Renderer::render_lines()
 		}
 
 		// Determine whether the line should be drawn or not by setting its should_render flag
-		clipper.clip_line(line);
+		clip_line(line);
 
 		if (!line.should_render)
 		{
@@ -246,7 +247,7 @@ void Renderer::rasterize_triangle(Triangle& triangle) const
 	}
 }
 
-/* This function is completely broken due to the clipper. No idea if I'll fix it or not */
+/* This function is completely broken due to the  No idea if I'll fix it or not */
 void Renderer::draw_face_normal(const Triangle& triangle) const
 {
 	// Compute the points in 3D space to draw the lines

@@ -22,35 +22,32 @@ enum EClipPlane
 	NUM_PLANES
 };
 
-struct Clipper
-{
-	static void clip_line(Line3D& line);
+void clip_line(Line3D& line);
 
-	void clip_triangles(
-		const std::vector<Triangle>& in_tris,
-		Triangle* out_tris, 
-		int& out_tri_count
-	);
-	static void clip_triangles_to_plane(
-		Triangle* tmp, 
-		const Triangle* tris_current_clip,
-		int& num_tris_current_clip, 
-		EClipPlane plane
-	);
-	static void clip_triangle_to_plane(
-		const Triangle& triangle,
-		EClipPlane plane, 
-		glm::vec4* out_verts, 
-		tex2* out_uvs,
-		float* out_gouraud,
-		int& num_clip_verts
-	);
+void clip_triangles(
+	const std::vector<Triangle>& in_tris,
+	Triangle* out_tris, 
+	int& out_tri_count
+);
+void clip_triangles_to_plane(
+	Triangle* tmp,
+	const Triangle* tris_current_clip, 
+	int& num_tris_current_clip,
+	EClipPlane plane
+);
+void clip_triangle_to_plane(
+	const Triangle& triangle, 
+	EClipPlane plane,
+	glm::vec4* out_verts, 
+	tex2* out_uvs, 
+	float* out_gouraud,
+	int& num_clip_verts
+);
 
-	static bool is_unmodified(const Triangle& triangle, EClipPlane plane);
-	static bool is_inside_plane(const glm::vec4& vertex, EClipPlane plane);
-	static float compute_intersect_ratio(
-		const glm::vec4& a, 
-		const glm::vec4& b, 
-		EClipPlane plane
-	);
-};
+bool is_unmodified(const Triangle& triangle, EClipPlane plane);
+bool is_inside_plane(const glm::vec4& vertex, EClipPlane plane);
+float compute_intersect_ratio(
+	const glm::vec4& a, 
+	const glm::vec4& b, 
+	EClipPlane plane
+);

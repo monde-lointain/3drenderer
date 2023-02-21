@@ -9,6 +9,7 @@ struct Viewport;
 struct Window;
 struct World;
 
+/** TODO: Change all the shared_ptrs to raw pointers */
 struct Application
 {
 	Application();

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
-#include <memory>
 #include <vector>
 
 struct Line3D;
@@ -24,11 +23,11 @@ enum EClipPlane
 struct Clipper
 {
 	void clip_line(Line3D& line);
-	// std::vector<Triangle> clip_triangles(std::vector<Triangle>& triangles);
-	// std::vector<Triangle> clip_triangles_to_plane(
-	//	std::vector<Triangle> triangles, const EClipPlane& plane);
-	void clip_triangles(const std::vector<Triangle>& in_tris,
-		std::unique_ptr<Triangle[]>& out_tris, int& out_tri_count);
+	void clip_triangles(
+		const std::vector<Triangle>& in_tris,
+		Triangle* out_tris, 
+		int& out_tri_count
+	);
 	void clip_triangles_to_plane(Triangle tmp[], const Triangle tris_current_clip[],
 		int& num_tris_current_clip, const EClipPlane& plane);
 	void clip_triangle_to_plane(const Triangle& triangle,

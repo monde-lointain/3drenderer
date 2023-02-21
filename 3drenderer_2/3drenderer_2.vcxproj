@@ -833,6 +833,7 @@
     <ClInclude Include="src\Renderer\ShadingMode.h" />
     <ClInclude Include="src\Utils\3d_types.h" />
     <ClInclude Include="src\Utils\Colors.h" />
+    <ClInclude Include="src\Utils\Constants.h" />
     <ClInclude Include="src\Utils\debug_counters.h" />
     <ClInclude Include="src\Utils\debug_helpers.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />

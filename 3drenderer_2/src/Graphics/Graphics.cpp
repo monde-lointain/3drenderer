@@ -22,13 +22,19 @@
 #include <SDL2/SDL.h>
 #endif
 
-void Graphics::init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
+std::shared_ptr<Viewport> viewport;
+SDL_Renderer* renderer = nullptr;
+uint32* framebuffer = nullptr;
+SDL_Texture* framebuffer_texture = nullptr;
+float* depth_buffer = nullptr;
+
+void graphics_init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
 {
 	renderer = app_renderer;
-	viewport = app_viewport;
+	viewport = std::move(app_viewport);
 }
 
-void Graphics::initialize_framebuffer()
+void initialize_framebuffer()
 {
 	framebuffer = new uint32[(size_t)viewport->width * viewport->height];
 	assert(framebuffer);
@@ -46,7 +52,7 @@ void Graphics::initialize_framebuffer()
 	assert(framebuffer);
 }
 
-void Graphics::free_framebuffer() const
+void free_framebuffer()
 {
 	// Free the resources allocated
 	delete[] framebuffer;
@@ -54,7 +60,7 @@ void Graphics::free_framebuffer() const
 	SDL_DestroyTexture(framebuffer_texture);
 }
 
-void Graphics::clear_framebuffer(uint32 color) const
+void clear_framebuffer(uint32 color)
 {
 	ZoneScoped; // for tracy
 
@@ -78,7 +84,7 @@ void Graphics::clear_framebuffer(uint32 color) const
 	}
 }
 
-void Graphics::clear_z_buffer() const
+void clear_z_buffer()
 {
 	ZoneScoped; // for tracy
 
@@ -105,7 +111,7 @@ void Graphics::clear_z_buffer() const
 	}
 }
 
-void Graphics::update_framebuffer() const
+void update_framebuffer()
 {
 	ZoneScoped; // for tracy
 
@@ -119,14 +125,14 @@ void Graphics::update_framebuffer() const
 	SDL_RenderCopy(renderer, framebuffer_texture, nullptr, nullptr);
 }
 
-void Graphics::render_frame() const
+void render_frame()
 {
 	ZoneScoped; // for tracy
 
 	SDL_RenderPresent(renderer);
 }
 
-void Graphics::draw_pixel(const glm::ivec2& p, uint32 color) const
+void draw_pixel(const glm::ivec2& p, uint32 color)
 {
 	// Clip any pixels that are drawn outside the viewport
 	if (!is_in_viewport(p))
@@ -138,7 +144,7 @@ void Graphics::draw_pixel(const glm::ivec2& p, uint32 color) const
 	framebuffer[index] = color;
 }
 
-void Graphics::draw_rect(const SDL_Rect& rect, uint32 color) const
+void draw_rect(const SDL_Rect& rect, uint32 color)
 {
 	glm::ivec2 p;
 	for (int i = 0; i < rect.w; i++)
@@ -152,11 +158,11 @@ void Graphics::draw_rect(const SDL_Rect& rect, uint32 color) const
 	}
 }
 
-void Graphics::draw_line_dda(
+void draw_line_dda(
 	const glm::ivec2& start,
 	const glm::ivec2& end,
 	uint32 color
-) const
+)
 {
 	const int dx = (end.x - start.x);
 	const int dy = (end.y - start.y);
@@ -181,11 +187,11 @@ void Graphics::draw_line_dda(
 	}
 }
 
-void Graphics::draw_line_bresenham(
+void draw_line_bresenham(
 	const glm::ivec2& start,
 	const glm::ivec2& end, 
 	uint32 color
-) const
+)
 {
 	ZoneScoped; // for tracy
 
@@ -231,13 +237,13 @@ void Graphics::draw_line_bresenham(
 	}
 }
 
-void Graphics::draw_line_bresenham_3d(
+void draw_line_bresenham_3d(
 	const glm::ivec2& start,
 	const glm::ivec2& end, 
 	float start_z,
 	float end_z, 
 	uint32 color
-) const
+)
 {
 	ZoneScoped; // for tracy
 
@@ -318,7 +324,7 @@ void Graphics::draw_line_bresenham_3d(
  * drawing stopped working properly, acting as a mask seemingly where it would
  * draw over the Z buffer with pixels of 100% alpha and no color.
  */
-void Graphics::draw_line_bresenham_3d_no_zfight(
+void draw_line_bresenham_3d_no_zfight(
 	const glm::ivec2& start,
 	const glm::ivec2& end, 
 	float start_z,
@@ -326,7 +332,7 @@ void Graphics::draw_line_bresenham_3d_no_zfight(
 	const glm::vec3& start_normal,
 	const glm::vec3& end_normal,
 	uint32 color
-) const
+)
 {
 	ZoneScoped; // for tracy
 
@@ -412,7 +418,7 @@ void Graphics::draw_line_bresenham_3d_no_zfight(
 	}
 }
 
-void Graphics::draw_wireframe(const Triangle& triangle, const uint32 color) const
+void draw_wireframe(const Triangle& triangle, const uint32 color)
 {
 	ZoneScoped; // for tracy
 
@@ -424,7 +430,7 @@ void Graphics::draw_wireframe(const Triangle& triangle, const uint32 color) cons
 	draw_line_bresenham(c, a, color);
 }
 
-void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32 color) const
+void draw_wireframe_3d(const Triangle& triangle, const uint32 color)
 {
 	ZoneScoped; // for tracy
 
@@ -445,11 +451,11 @@ void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32 color) c
 using fixed = int32; // 28.4 fixed point format
 constexpr int FIXED_BITS = 4;
 
-void Graphics::draw_solid(
+void draw_solid(
 	const Triangle& triangle,
 	uint32 color,
 	EShadingMode shading_mode
-) const
+)
 {
 	ZoneScoped; // for tracy
 
@@ -560,10 +566,10 @@ void Graphics::draw_solid(
 	}
 }
 
-void Graphics::draw_textured(
+void draw_textured(
 	const Triangle& triangle, 
 	EShadingMode shading_mode
-) const
+)
 {
 	ZoneScoped; // for tracy
 
@@ -747,7 +753,7 @@ void Graphics::draw_textured(
  * Original rasterization algorithm kept for reference purposes. This one had
  * subpixel precision but was much slower
  */
-//void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode)
+//void draw_textured(const Triangle& triangle, EShadingMode shading_mode)
 //{
 //	ZoneScoped; // for tracy
 //
@@ -873,11 +879,11 @@ void Graphics::draw_textured(
 //	}
 //}
 
-void Graphics::draw_vertices(
+void draw_vertices(
 	const Triangle& triangle, 
 	const int point_size, 
 	const uint32 color
-) const
+)
 {
 	const float offset = (float)point_size * 0.5f;
 	glm::ivec2 origin;
@@ -887,11 +893,11 @@ void Graphics::draw_vertices(
 		origin.x = lrintf(vertex.position.x - offset + 0.5f);
 		origin.y = lrintf(vertex.position.y - offset + 0.5f);
 		rect = { origin.x, origin.y, point_size, point_size };
-		Graphics::draw_rect(rect, color);
+		draw_rect(rect, color);
 	}
 }
 
-void Graphics::draw_gizmo(const Gizmo& gizmo) const
+void draw_gizmo(const Gizmo& gizmo)
 {
 	// x axis
 	const glm::ivec2 x_start(lrintf(gizmo.bases[0].points[0].x), lrintf(gizmo.bases[0].points[0].y));
@@ -909,21 +915,21 @@ void Graphics::draw_gizmo(const Gizmo& gizmo) const
 	draw_line_bresenham(z_start, z_end, Colors::CYAN);
 }
 
-bool Graphics::is_in_viewport(const glm::ivec2& p) const
+bool is_in_viewport(const glm::ivec2& p)
 {
 	const bool x_in_viewport = p.x >= 0 && p.x < viewport->width;
 	const bool y_in_viewport = p.y >= 0 && p.y < viewport->height;
 	return x_in_viewport && y_in_viewport;
 }
 
-bool Graphics::is_top_left(const glm::ivec2& a, const glm::ivec2& b)
+bool is_top_left(const glm::ivec2& a, const glm::ivec2& b)
 {
 	const bool is_top = (a.y == b.y) && (a.x < b.x);
 	const bool is_left = a.y > b.y;
 	return is_top || is_left;
 }
 
-uint32 Graphics::get_zbuffer_color(const float val)
+uint32 get_zbuffer_color(const float val)
 {
 	// Convert to 8 bits (0-255)
 	const uint8 color = (uint8)lrintf(val * 255.0f + 0.5f);
@@ -933,7 +939,7 @@ uint32 Graphics::get_zbuffer_color(const float val)
 	return result;
 }
 
-uint32 Graphics::apply_intensity(const uint32 color, const float intensity)
+uint32 apply_intensity(const uint32 color, const float intensity)
 {
 	// Unpack and convert to float
 	float r = (float)((color >> 16) & 0xFF);

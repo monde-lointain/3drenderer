@@ -15,87 +15,63 @@ struct SDL_Texture;
 struct Triangle;
 struct Viewport;
 
-// TODO: This should not be a structure. We don't access these functions
-// anywhere else but from the renderer. It's safe just to keep them as is in
-// their own header file without a separate graphics class
-struct Graphics
-{
-	/** Initialization and freeing of resources */
-	void init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport);
-	void initialize_framebuffer();
-	void free_framebuffer() const;
+/** Initialization and freeing of resources */
+void graphics_init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport);
+void initialize_framebuffer();
+void free_framebuffer();
 
-	/** Clearing and updating the buffers */
-	void clear_framebuffer(uint32 color) const;
-	void clear_z_buffer() const;
-	void update_framebuffer() const;
-	void render_frame() const;
+/** Clearing and updating the buffers */
+void clear_framebuffer(uint32 color);
+void clear_z_buffer();
+void update_framebuffer();
+void render_frame();
 
-	/** Basic drawing algorithms */
-	void draw_pixel(const glm::ivec2& p, uint32 color) const;
-	void draw_rect(const SDL_Rect& rect, uint32 color) const;
+/** Basic drawing algorithms */
+void draw_pixel(const glm::ivec2& p, uint32 color);
+void draw_rect(const SDL_Rect& rect, uint32 color);
 
-	/** Line drawing algorithms */
-	void draw_line_dda(
-		const glm::ivec2& start, 
-		const glm::ivec2& end, 
-		uint32 color
-	) const;
-	void draw_line_bresenham(
-		const glm::ivec2& start, 
-		const glm::ivec2& end, 
-		uint32 color
-	) const;
-	void draw_line_bresenham_3d(
-		const glm::ivec2& start, 
-		const glm::ivec2& end,
-		float start_z, 
-		float end_z, 
-		uint32 color
-	) const;
-	void draw_line_bresenham_3d_no_zfight(
-		const glm::ivec2& start,
-		const glm::ivec2& end, 
-		float start_z, 
-		float end_z,
-		const glm::vec3& start_normal, 
-		const glm::vec3& end_normal,
-		uint32 color
-	) const;
+/** Line drawing algorithms */
+void draw_line_dda(
+	const glm::ivec2& start, 
+	const glm::ivec2& end, 
+	uint32 color
+);
+void draw_line_bresenham(
+	const glm::ivec2& start, 
+	const glm::ivec2& end, 
+	uint32 color
+);
+void draw_line_bresenham_3d(
+	const glm::ivec2& start, 
+	const glm::ivec2& end,
+	float start_z, 
+	float end_z, 
+	uint32 color
+);
+void draw_line_bresenham_3d_no_zfight(
+	const glm::ivec2& start,
+	const glm::ivec2& end, 
+	float start_z, 
+	float end_z,
+	const glm::vec3& start_normal, 
+	const glm::vec3& end_normal,
+	uint32 color
+);
 
-	/** Wireframe drawing algorithms */
-	void draw_wireframe(const Triangle& triangle, uint32 color) const;
-	void draw_wireframe_3d(const Triangle& triangle, uint32 color) const;
+/** Wireframe drawing algorithms */
+void draw_wireframe(const Triangle& triangle, uint32 color);
+void draw_wireframe_3d(const Triangle& triangle, uint32 color);
 
-	/** Solid drawing algorithms */
-	void draw_solid(
-		const Triangle& triangle, 
-		uint32 color, 
-		EShadingMode shading_mode
-	) const;
-	void draw_textured(
-		const Triangle& triangle, 
-		EShadingMode shading_mode
-	) const;
+/** Solid drawing algorithms */
+void draw_solid(const Triangle& triangle, uint32 color, EShadingMode shading_mode);
+void draw_textured(const Triangle& triangle, EShadingMode shading_mode);
 
-	/** Misc. drawing algorithms */
-	void draw_vertices(
-		const Triangle& triangle, 
-		int point_size, 
-		uint32 color
-	) const;
-	void draw_gizmo(const Gizmo& gizmo) const;
+/** Misc. drawing algorithms */
+void draw_vertices(const Triangle& triangle, int point_size, uint32 color);
+void draw_gizmo(const Gizmo& gizmo);
 
-	/** Misc. functions */
-	[[nodiscard]] bool is_in_viewport(const glm::ivec2& p) const;
-	static bool is_top_left(const glm::ivec2& a, const glm::ivec2& b);
-	static uint32 get_zbuffer_color(float val);
-	static uint32 apply_intensity(uint32 color, float intensity);
-
-	std::shared_ptr<Viewport> viewport;
-	SDL_Renderer* renderer;
-	// These can be declared in the cpp
-	uint32* framebuffer = nullptr;
-	SDL_Texture* framebuffer_texture = nullptr;
-	float* depth_buffer = nullptr;
-};
+/** Misc. functions */
+bool is_in_viewport(const glm::ivec2& p);
+bool is_top_left(const glm::ivec2& a, const glm::ivec2& b);
+uint32 get_zbuffer_color(float val);
+uint32 apply_intensity(uint32 color, float intensity);

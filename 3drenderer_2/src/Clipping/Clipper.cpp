@@ -204,8 +204,11 @@ void Clipper::clip_line(Line3D& line)
 
 constexpr int MAX_TRIANGLES_PER_CLIP = 50;
 
-void Clipper::clip_triangles(const std::vector<Triangle>& in_tris,
-	std::unique_ptr<Triangle[]>& out_tris, int& out_tri_count)
+void Clipper::clip_triangles(
+	const std::vector<Triangle>& in_tris,
+	Triangle* out_tris,
+	int& out_tri_count
+)
 {
 	ZoneScoped; // for tracy
 

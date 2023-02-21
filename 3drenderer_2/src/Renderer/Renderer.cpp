@@ -1,15 +1,18 @@
 #include "Renderer.h"
 
+#include <thread>
+
+#include <omp.h>
+#include <tracy/tracy/Tracy.hpp>
+
 #include "Viewport.h"
+#include "../Graphics/Graphics.h"
 #include "../Math/Math3D.h"
 #include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/math_helpers.h"
 #include "../Window/Window.h"
 #include "../World/World.h"
-#include <tracy/tracy/Tracy.hpp>
-#include <omp.h>
-#include <thread>
 
 #ifdef _MSC_VER // Windows
 #include <SDL.h>
@@ -17,20 +20,20 @@
 #include <SDL2/SDL.h>
 #endif
 
-constexpr int MAX_TRIANGLES = 100000;
 
-void Renderer::initialize(std::shared_ptr<Window> app_window,
+void Renderer::initialize(
+	std::shared_ptr<Window> app_window,
 	std::shared_ptr<Viewport> app_viewport,
-	std::shared_ptr<World> app_world)
+	std::shared_ptr<World> app_world
+)
 {
 	// Assign the window, viewport and world pointers
-	viewport = app_viewport;
-	window = app_window;
-	world = app_world;
+	viewport = std::move(app_viewport);
+	window = std::move(app_window);
+	world = std::move(app_world);
 
-	graphics = std::make_unique<Graphics>();
-	graphics->init(window->renderer, viewport);
-	graphics->initialize_framebuffer();
+	graphics_init(window->renderer, viewport);
+	initialize_framebuffer();
 
 	render_mode = TEXTURED_WIREFRAME;
 	shading_mode = GOURAUD;
@@ -38,20 +41,20 @@ void Renderer::initialize(std::shared_ptr<Window> app_window,
 	backface_culling = true;
 
 	// Create the array of triangles that will be rasterized
-	triangles_to_rasterize = std::make_unique<Triangle[]>(MAX_TRIANGLES);
+	triangles_to_rasterize = std::make_unique<std::array<Triangle, MAX_TRIANGLES>>();
 }
 
 void Renderer::destroy()
 {
-	graphics->free_framebuffer();
+	free_framebuffer();
 }
 
 void Renderer::render()
 {
 	ZoneScoped; // for tracy
 
-	graphics->clear_framebuffer(Colors::MAGENTA);
-	graphics->clear_z_buffer();
+	clear_framebuffer(Colors::MAGENTA);
+	clear_z_buffer();
 
 	// Render all triangles in the scene
 	render_triangles_in_scene();
@@ -63,8 +66,11 @@ void Renderer::render()
 	// Reset the positions of the gizmo
 	world->gizmo.reset();
 
-	graphics->update_framebuffer();
+	update_framebuffer();
 }
+
+// Projection
+constexpr int NUM_TRIANGLES_PER_BATCH = 10;
 
 void Renderer::render_triangles_in_scene()
 {
@@ -77,12 +83,10 @@ void Renderer::render_triangles_in_scene()
 			draw_face_normal(triangle);
 		}
 
-		// Projection
-		int num_vertices = 3;
-		for (int i = 0; i < num_vertices; i++)
+		for (Vertex& vertex : triangle.vertices)
 		{
 			// Transform the point from camera space to clip space
-			Math3D::project(triangle.vertices[i].position, world->camera.projection_matrix);
+			Math3D::project(vertex.position, world->camera.projection_matrix);
 		}
 	}
 
@@ -91,36 +95,39 @@ void Renderer::render_triangles_in_scene()
 	int num_triangles_to_rasterize = 0;
 	// Clip all the triangles and stick them in a new array
 	clipper.clip_triangles(
-		world->triangles_in_scene, triangles_to_rasterize, num_triangles_to_rasterize);
+		world->triangles_in_scene, 
+		triangles_to_rasterize->data(),
+		num_triangles_to_rasterize
+	);
 
 	ZoneNamedN(rasterize_triangles_scope, "Rasterization", true); // for tracy
 
 // Set the number of threads to execute to the total number of physical cores on
 // the machine, plus one. Note that this function assumes that the PC has two
 // logical cores per physical core
-#pragma omp parallel num_threads((std::thread::hardware_concurrency() / 2) + 1)
+#pragma omp parallel \
+	num_threads((std::thread::hardware_concurrency() / 2) + 1) \
+	default(none) \
+	shared(num_triangles_to_rasterize)
 // Give each thread ten triangles at a time
-#pragma omp for schedule(dynamic,10)
+#pragma omp for schedule(static, NUM_TRIANGLES_PER_BATCH)
 	for (int i = 0; i < num_triangles_to_rasterize; i++)
 	{
 		ZoneNamedN(render_triangle_scope, "Render triangle", true); // for tracy
 
-		Triangle& triangle = triangles_to_rasterize[i];
+		Triangle& triangle = triangles_to_rasterize->data()[i];
 
 		// Perform conversion to NDC and viewport transform here
-		int num_vertices = 3;
-		for (int j = 0; j < num_vertices; j++)
+		for (Vertex& vertex : triangle.vertices)
 		{
 			// Store 1/w for later use
-			triangle.vertices[j].position.w =
-				is_nearly_zero(triangle.vertices[j].position.w)
-					? 1.0f
-					: 1.0f / triangle.vertices[j].position.w;
+			vertex.position.w = is_nearly_zero(vertex.position.w)
+									? 1.0f
+									: 1.0f / vertex.position.w;
 			// Perform perspective divide
-			Math3D::to_ndc(triangle.vertices[j].position, triangle.vertices[j].position.w);
+			Math3D::to_ndc(vertex.position, vertex.position.w);
 			// Scale into view
-			Math3D::to_screen_space(
-				triangle.vertices[j].position, viewport, world->camera);
+			Math3D::to_screen_space(vertex.position, viewport, world->camera);
 		}
 
 		// Perform backface culling
@@ -132,63 +139,7 @@ void Renderer::render_triangles_in_scene()
 			}
 		}
 
-		// Rasterization
-		switch (render_mode)
-		{
-			case VERTICES_ONLY:
-			{
-				graphics->draw_vertices(triangle, 4, Colors::YELLOW);
-				break;
-			}
-			case WIREFRAME:
-			{
-				graphics->draw_wireframe(triangle, Colors::GREEN);
-				break;
-			}
-			case WIREFRAME_VERTICES:
-			{
-				graphics->draw_wireframe(triangle, Colors::GREEN);
-				graphics->draw_vertices(triangle, 4, Colors::YELLOW);
-				break;
-			}
-			case SOLID:
-			{
-				graphics->draw_solid(triangle, Colors::WHITE, shading_mode);
-				break;
-			}
-			case SOLID_WIREFRAME:
-			{
-				graphics->draw_solid(triangle, Colors::WHITE, shading_mode);
-				graphics->draw_wireframe_3d(triangle, Colors::BLACK);
-				break;
-			}
-			case TEXTURED:
-			{
-				if (!triangle.texture)
-				{
-					graphics->draw_solid(triangle, Colors::RED, NONE);
-				}
-				else
-				{
-					graphics->draw_textured(triangle, shading_mode);
-				}
-				break;
-			}
-			case TEXTURED_WIREFRAME:
-			{
-				if (!triangle.texture)
-				{
-					graphics->draw_solid(triangle, Colors::RED, NONE);
-					graphics->draw_wireframe_3d(triangle, Colors::BLACK);
-				}
-				else
-				{
-					graphics->draw_textured(triangle, shading_mode);
-					graphics->draw_wireframe_3d(triangle, Colors::BLACK);
-				}
-				break;
-			}
-		}
+		rasterize_triangle(triangle);
 	}
 }
 
@@ -230,18 +181,79 @@ void Renderer::render_lines()
 		const float end_z = line.points[1].z;
 		const uint32 color = line.color;
 
-		graphics->draw_line_bresenham_3d(start, end, start_z, end_z, color);
+		draw_line_bresenham_3d(start, end, start_z, end_z, color);
 	}
 	world->lines_in_scene.clear();
 }
 
-void Renderer::draw_face_normal(const Triangle& triangle)
+void Renderer::rasterize_triangle(Triangle& triangle) const
+{
+	// Rasterization
+	switch (render_mode)
+	{
+		case VERTICES_ONLY:
+		{
+			draw_vertices(triangle, 4, Colors::YELLOW);
+			break;
+		}
+		case WIREFRAME:
+		{
+			draw_wireframe(triangle, Colors::GREEN);
+			break;
+		}
+		case WIREFRAME_VERTICES:
+		{
+			draw_wireframe(triangle, Colors::GREEN);
+			draw_vertices(triangle, 4, Colors::YELLOW);
+			break;
+		}
+		case SOLID:
+		{
+			draw_solid(triangle, Colors::WHITE, shading_mode);
+			break;
+		}
+		case SOLID_WIREFRAME:
+		{
+			draw_solid(triangle, Colors::WHITE, shading_mode);
+			draw_wireframe_3d(triangle, Colors::BLACK);
+			break;
+		}
+		case TEXTURED:
+		{
+			if (!triangle.texture)
+			{
+				draw_solid(triangle, Colors::RED, NONE);
+			}
+			else
+			{
+				draw_textured(triangle, shading_mode);
+			}
+			break;
+		}
+		case TEXTURED_WIREFRAME:
+		{
+			if (!triangle.texture)
+			{
+				draw_solid(triangle, Colors::RED, NONE);
+				draw_wireframe_3d(triangle, Colors::BLACK);
+			}
+			else
+			{
+				draw_textured(triangle, shading_mode);
+				draw_wireframe_3d(triangle, Colors::BLACK);
+			}
+			break;
+		}
+	}
+}
+
+void Renderer::draw_face_normal(const Triangle& triangle) const
 {
 	// Compute the points in 3D space to draw the lines
-	float normal_length = 0.1f;
-	glm::vec4 a(triangle.vertices[0].position);
-	glm::vec4 b(triangle.vertices[1].position);
-	glm::vec4 c(triangle.vertices[2].position);
+	const float normal_length = 0.1f;
+	const glm::vec4 a(triangle.vertices[0].position);
+	const glm::vec4 b(triangle.vertices[1].position);
+	const glm::vec4 c(triangle.vertices[2].position);
 	glm::vec4 center = glm::vec4((a + b + c) / 3.0f);
 	glm::vec4 end = center;
 	end.x += (triangle.face_normal.x * normal_length);
@@ -262,20 +274,20 @@ void Renderer::draw_face_normal(const Triangle& triangle)
 	case VERTICES_ONLY:
 	case WIREFRAME:
 	case WIREFRAME_VERTICES:
-		graphics->draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::WHITE);
+		draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::WHITE);
 		break;
 	case SOLID:
 	case SOLID_WIREFRAME:
 	case TEXTURED:
 	case TEXTURED_WIREFRAME:
-		graphics->draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::GREEN);
+		draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::GREEN);
 		break;
 	}
 }
 
 void Renderer::display_frame()
 {
-	graphics->render_frame();
+	render_frame();
 }
 
 void Renderer::set_render_mode(ERenderMode mode)

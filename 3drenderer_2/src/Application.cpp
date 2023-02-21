@@ -140,5 +140,5 @@ void Application::render()
 {
 	renderer->render();
 	gui->render();
-	renderer->display_frame();
+	Renderer::display_frame();
 }

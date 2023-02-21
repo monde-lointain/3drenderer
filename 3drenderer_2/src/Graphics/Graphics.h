@@ -20,6 +20,7 @@ struct Viewport;
 // their own header file without a separate graphics class
 struct Graphics
 {
+	/** Initialization and freeing of resources */
 	void init(
 		SDL_Renderer* app_renderer, 
 		std::shared_ptr<Viewport> app_viewport
@@ -29,6 +30,7 @@ struct Graphics
 
 	void free_framebuffer() const;
 
+	/** Clearing and updating the buffers */
 	void clear_framebuffer(uint32 color) const;
 
 	void clear_z_buffer() const;
@@ -37,10 +39,12 @@ struct Graphics
 
 	void render_frame() const;
 
+	/** Basic drawing algorithms */
 	void draw_pixel(const glm::ivec2& p, uint32 color) const;
 
 	void draw_rect(const SDL_Rect& rect, uint32 color) const;
 
+	/** Line drawing algorithms */
 	void draw_line_dda(
 		const glm::ivec2& start, 
 		const glm::ivec2& end, 
@@ -71,10 +75,12 @@ struct Graphics
 		uint32 color
 	) const;
 
+	/** Wireframe triangle drawing algorithms */
 	void draw_wireframe(const Triangle& triangle, uint32 color);
 
 	void draw_wireframe_3d(const Triangle& triangle, uint32 color);
 
+	/** Solid triangle drawing algorithms */
 	void draw_solid(
 		const Triangle& triangle, 
 		uint32 color, 
@@ -86,6 +92,7 @@ struct Graphics
 		EShadingMode shading_mode
 	) const;
 
+	/** Misc. drawing algorithms */
 	void draw_vertices(
 		const Triangle& triangle, 
 		int point_size, 
@@ -94,6 +101,7 @@ struct Graphics
 
 	void draw_gizmo(const Gizmo& gizmo);
 
+	/** Misc. functions */
 	[[nodiscard]] bool is_in_viewport(const glm::ivec2& p) const;
 
 	static bool is_top_left(const glm::ivec2& a, const glm::ivec2& b);

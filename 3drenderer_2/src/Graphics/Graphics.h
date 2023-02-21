@@ -20,18 +20,25 @@ struct Viewport;
 // their own header file without a separate graphics class
 struct Graphics
 {
-	void init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport);
+	void init(
+		SDL_Renderer* app_renderer, 
+		std::shared_ptr<Viewport> app_viewport
+	);
 
 	void initialize_framebuffer();
+
 	void free_framebuffer() const;
 
 	void clear_framebuffer(uint32 color) const;
+
 	void clear_z_buffer() const;
 
 	void update_framebuffer() const;
+
 	void render_frame() const;
 
 	void draw_pixel(const glm::ivec2& p, uint32 color) const;
+
 	void draw_rect(const SDL_Rect& rect, uint32 color) const;
 
 	void draw_line_dda(
@@ -39,11 +46,13 @@ struct Graphics
 		const glm::ivec2& end, 
 		uint32 color
 	) const;
+
 	void draw_line_bresenham(
 		const glm::ivec2& start, 
 		const glm::ivec2& end, 
 		uint32 color
 	) const;
+
 	void draw_line_bresenham_3d(
 		const glm::ivec2& start, 
 		const glm::ivec2& end,
@@ -51,6 +60,7 @@ struct Graphics
 		float end_z, 
 		uint32 color
 	) const;
+
 	void draw_line_bresenham_3d_no_zfight(
 		const glm::ivec2& start,
 		const glm::ivec2& end, 
@@ -62,18 +72,34 @@ struct Graphics
 	) const;
 
 	void draw_wireframe(const Triangle& triangle, uint32 color);
+
 	void draw_wireframe_3d(const Triangle& triangle, uint32 color);
 
-	void draw_solid(const Triangle& triangle, uint32 color, EShadingMode shading_mode) const;
-	void draw_textured(const Triangle& triangle, EShadingMode shading_mode);
+	void draw_solid(
+		const Triangle& triangle, 
+		uint32 color, 
+		EShadingMode shading_mode
+	) const;
 
-	void draw_vertices(const Triangle& triangle, int point_size, uint32 color);
+	void draw_textured(
+		const Triangle& triangle, 
+		EShadingMode shading_mode
+	) const;
+
+	void draw_vertices(
+		const Triangle& triangle, 
+		int point_size, 
+		uint32 color
+	) const;
+
 	void draw_gizmo(const Gizmo& gizmo);
 
 	[[nodiscard]] bool is_in_viewport(const glm::ivec2& p) const;
+
 	static bool is_top_left(const glm::ivec2& a, const glm::ivec2& b);
 
 	static uint32 get_zbuffer_color(float val);
+
 	static uint32 apply_intensity(uint32 color, float intensity);
 
 	std::shared_ptr<Viewport> viewport;

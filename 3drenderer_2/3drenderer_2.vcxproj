@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -143,21 +143,33 @@
     <LibraryPath>C:\SDL2\lib\x64;$(LibraryPath)</LibraryPath>
     <LinkIncremental />
     <GenerateManifest />
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest />
     <IncludePath>C:\Users\CHW\projects\3drenderer_2\3drenderer_2\libs;$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\SDL2\include;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Tracy|x64'">
     <GenerateManifest />
     <IncludePath>C:\Users\CHW\projects\3drenderer_2\3drenderer_2\libs;$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\SDL2\include;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'">
     <GenerateManifest />
     <IncludePath>C:\Users\CHW\projects\3drenderer_2\3drenderer_2\libs;$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\SDL2\include;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

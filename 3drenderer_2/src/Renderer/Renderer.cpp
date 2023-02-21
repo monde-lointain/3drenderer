@@ -50,7 +50,7 @@ void Renderer::render()
 {
 	ZoneScoped; // for tracy
 
-	graphics->clear_framebuffer(Colors::BLUE);
+	graphics->clear_framebuffer(Colors::MAGENTA);
 	graphics->clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -224,15 +224,13 @@ void Renderer::render_lines()
 		}
 
 		// Draw the line
-		const glm::vec4& start = line.points[0];
-		const glm::vec4& end = line.points[1];
-		const uint32& color = line.color;
+		const glm::ivec2 start(lrintf(line.points[0].x), lrintf(line.points[0].y));
+		const glm::ivec2 end(lrintf(line.points[1].x), lrintf(line.points[1].y));
+		const float start_z = line.points[0].z;
+		const float end_z = line.points[1].z;
+		const uint32 color = line.color;
 
-		graphics->draw_line_bresenham_3d(
-			int(start.x), int(start.y), start.z,
-			int(end.x), int(end.y), end.z,
-			color
-		);
+		graphics->draw_line_bresenham_3d(start, end, start_z, end_z, color);
 	}
 	world->lines_in_scene.clear();
 }
@@ -254,20 +252,23 @@ void Renderer::draw_face_normal(const Triangle& triangle)
 	Math3D::project_point(center, world->camera.projection_matrix, viewport, world->camera);
 	Math3D::project_point(end, world->camera.projection_matrix, viewport, world->camera);
 
+	const glm::ivec2 center_(lrintf(center.x), lrintf(center.y));
+	const glm::ivec2 end_(lrintf(end.x), lrintf(end.y));
+	const float center_z = center.z;
+	const float end_z = end.z;
+
 	switch (render_mode)
 	{
 	case VERTICES_ONLY:
 	case WIREFRAME:
 	case WIREFRAME_VERTICES:
-		graphics->draw_line_bresenham_3d(int(center.x), int(center.y),
-			center.z, int(end.x), int(end.y), end.z, Colors::WHITE);
+		graphics->draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::WHITE);
 		break;
 	case SOLID:
 	case SOLID_WIREFRAME:
 	case TEXTURED:
 	case TEXTURED_WIREFRAME:
-		graphics->draw_line_bresenham_3d(int(center.x), int(center.y),
-			center.z, int(end.x), int(end.y), end.z, Colors::GREEN);
+		graphics->draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::GREEN);
 		break;
 	}
 }

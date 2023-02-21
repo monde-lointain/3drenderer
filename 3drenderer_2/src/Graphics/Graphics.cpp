@@ -511,7 +511,8 @@ void Graphics::draw_solid(
 				// behind (front to back)
 				index = viewport->width * (viewport->height - y - 1) + x;
 				current_depth = depth_buffer[index];
-				if (depth >= current_depth) {
+				if (depth >= current_depth)
+				{
 					continue;
 				}
 				depth_buffer[index] = depth;
@@ -551,7 +552,10 @@ void Graphics::draw_solid(
 	}
 }
 
-void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode)
+void Graphics::draw_textured(
+	const Triangle& triangle, 
+	EShadingMode shading_mode
+) const
 {
 	ZoneScoped; // for tracy
 
@@ -664,7 +668,8 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 				// behind (front to back)
 				index = viewport->width * (viewport->height - y - 1) + x;
 				current_depth = depth_buffer[index];
-				if (depth >= current_depth) {
+				if (depth >= current_depth)
+				{
 					continue;
 				}
 				depth_buffer[index] = depth;
@@ -861,7 +866,10 @@ void Graphics::draw_textured(const Triangle& triangle, EShadingMode shading_mode
 //}
 
 void Graphics::draw_vertices(
-	const Triangle& triangle, const int point_size, const uint32 color)
+	const Triangle& triangle, 
+	const int point_size, 
+	const uint32 color
+) const
 {
 	const float offset = (float)point_size * 0.5f;
 	glm::ivec2 origin;
@@ -941,8 +949,8 @@ uint32 Graphics::apply_intensity(const uint32 color, const float intensity)
 
 	// Repack
 	const uint32 out = ((lrintf(r + 0.5f) << 16) | 
-		                (lrintf(g + 0.5f) << 8) | 
-		                (lrintf(b + 0.5f) << 0) | 
-		                (lrintf(a + 0.5f) << 24));
+						(lrintf(g + 0.5f) << 8) | 
+						(lrintf(b + 0.5f) << 0) | 
+						(lrintf(a + 0.5f) << 24));
 	return out;
 }

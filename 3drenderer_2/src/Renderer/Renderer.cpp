@@ -5,12 +5,12 @@
 #include <omp.h>
 #include <tracy/tracy/Tracy.hpp>
 
-#include "Viewport.h"
 #include "../Graphics/Graphics.h"
 #include "../Math/Math3D.h"
 #include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/math_helpers.h"
+#include "../Viewport/Viewport.h"
 #include "../Window/Window.h"
 #include "../World/World.h"
 
@@ -69,7 +69,6 @@ void Renderer::render()
 	update_framebuffer();
 }
 
-// Projection
 constexpr int NUM_TRIANGLES_PER_BATCH = 10;
 
 void Renderer::render_triangles_in_scene()
@@ -247,6 +246,7 @@ void Renderer::rasterize_triangle(Triangle& triangle) const
 	}
 }
 
+/* This function is completely broken due to the clipper. No idea if I'll fix it or not */
 void Renderer::draw_face_normal(const Triangle& triangle) const
 {
 	// Compute the points in 3D space to draw the lines
@@ -260,7 +260,6 @@ void Renderer::draw_face_normal(const Triangle& triangle) const
 	end.y += (triangle.face_normal.y * normal_length);
 	end.z += (triangle.face_normal.z * normal_length);
 
-	// TODO: Change to reflect the revised pipeline order
 	Math3D::project_point(center, world->camera.projection_matrix, viewport, world->camera);
 	Math3D::project_point(end, world->camera.projection_matrix, viewport, world->camera);
 

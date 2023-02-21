@@ -12,7 +12,7 @@
 #include "../Mesh/Texture.h"
 #include "../Renderer/Gizmo.h"
 #include "../Renderer/Renderer.h"
-#include "../Renderer/Viewport.h"
+#include "../Viewport/Viewport.h"
 #include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 

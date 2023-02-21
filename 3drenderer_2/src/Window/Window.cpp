@@ -1,6 +1,6 @@
 #include "Window.h"
 
-#include "../Renderer/Viewport.h"
+#include "../Viewport/Viewport.h"
 
 #ifdef _MSC_VER // Windows
 #include <SDL.h>

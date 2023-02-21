@@ -646,7 +646,7 @@ void Graphics::draw_textured(
 	int tex_x, tex_y, tex_index;
 
 	glm::vec2 p;
-	glm::ivec2 pi;
+	glm::ivec2 p_i;
 	// Loop over the bounding box and rasterize the triangle
 	for (int x = min_x; x <= max_x; x++) {
 		for (int y = min_y; y <= max_y; y++) {
@@ -694,18 +694,18 @@ void Graphics::draw_textured(
 				tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
 				uint32 color = texture->pixels[tex_index];
 
-				pi.x = x;
-				pi.y = y;
+				p_i.x = x;
+				p_i.y = y;
 				// Execute the pixel shader
 				switch (shading_mode)
 				{
 					case NONE:
 						// Set pixel color
-						draw_pixel(pi, color);
+						draw_pixel(p_i, color);
 						break;
 					case FLAT:
 						color = apply_intensity(color, intensity);
-						draw_pixel(pi, color);
+						draw_pixel(p_i, color);
 						break;
 					case GOURAUD:
 					{
@@ -725,7 +725,7 @@ void Graphics::draw_textured(
 						color = apply_intensity(color, pixel_intensity);
 
 						// Render the pixel
-						draw_pixel(pi, color);
+						draw_pixel(p_i, color);
 						break;
 					}
 					break;
@@ -948,9 +948,7 @@ uint32 Graphics::apply_intensity(const uint32 color, const float intensity)
 	a *= 1.0f; // give the hint to the compiler to vectorize
 
 	// Repack
-	const uint32 out = ((lrintf(r + 0.5f) << 16) | 
-						(lrintf(g + 0.5f) << 8) | 
-						(lrintf(b + 0.5f) << 0) | 
-						(lrintf(a + 0.5f) << 24));
+	const uint32 out = ((lrintf(r + 0.5f) << 16) | (lrintf(g + 0.5f) << 8)
+						| (lrintf(b + 0.5f) << 0) | (lrintf(a + 0.5f) << 24));
 	return out;
 }

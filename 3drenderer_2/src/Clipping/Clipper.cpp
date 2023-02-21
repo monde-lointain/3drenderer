@@ -1,15 +1,16 @@
 #include "Clipper.h"
 
-#include "../Line/Line3D.h"
-#include "../Logger/Logger.h"
-#include "../Mesh/tex2.h"
-#include "../Triangle/Triangle.h"
-#include "../Utils/math_helpers.h"
-#include "../Utils/string_ops.h"
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtx/compatibility.hpp>
 #include <glm/vec4.hpp>
 #include <tracy/tracy/Tracy.hpp>
+
+#include "../Line/Line3D.h"
+#include "../Logger/Logger.h"
+#include "../Mesh/tex2.h"
+#include "../Triangle/Triangle.h"
+#include "../Utils/Constants.h"
+#include "../Utils/string_ops.h"
 
 void Clipper::clip_line(Line3D& line)
 {
@@ -19,9 +20,11 @@ void Clipper::clip_line(Line3D& line)
 	bool curr_outside = false;
 	bool prev_outside = false;
 
+	float t;
+	EClipPlane plane;
 	for (int i = 0; i < NUM_PLANES; i++)
 	{
-		EClipPlane plane = (EClipPlane)i;
+		plane = (EClipPlane)i;
 		curr_outside = !is_inside_plane(curr, plane);
 		prev_outside = !is_inside_plane(prev, plane);
 
@@ -36,13 +39,13 @@ void Clipper::clip_line(Line3D& line)
 		// Outside moving in
 		if (prev_outside)
 		{
-			float t = compute_intersect_ratio(curr, prev, plane);
+			t = compute_intersect_ratio(prev, curr, plane);
 			prev = glm::lerp(prev, curr, t);
 		}
 		// Inside moving out
 		else if (curr_outside)
 		{
-			float t = compute_intersect_ratio(prev, curr, plane);
+			t = compute_intersect_ratio(curr, prev, plane);
 			curr = glm::lerp(curr, prev, t);
 		}
 	}
@@ -212,15 +215,16 @@ void Clipper::clip_triangles(
 {
 	ZoneScoped; // for tracy
 
-	// Total number of triangles in the scene (TODO: should maybe be an input variable)
-	int num_tris = (int)in_tris.size();
 	// Number of triangles that are left after clipping
 	out_tri_count = 0;
-	// The triangles created for single triangle after clipping against all clip planes
-	Triangle tris_current_clip[MAX_TRIANGLES_PER_CLIP];
+	// The triangles created for single triangle after clipping against all clip
+	// planes
+	std::array<Triangle, MAX_TRIANGLES_PER_CLIP> tris_current_clip;
+	//Triangle tris_current_clip[MAX_TRIANGLES_PER_CLIP];
 	int num_tris_current_clip = 0;
 	// Temporary container to store the triangles clipped from a single plane in
-	Triangle tmp[MAX_TRIANGLES_PER_CLIP];
+	std::array<Triangle, MAX_TRIANGLES_PER_CLIP> tmp;
+	//Triangle tmp[MAX_TRIANGLES_PER_CLIP];
 
 	int i, j;
 	// Loop over each triangle
@@ -234,15 +238,22 @@ void Clipper::clip_triangles(
 		for (i = 0; i < NUM_PLANES; i++)
 		{
 			const EClipPlane& plane = (EClipPlane)i;
-			// Clip all current triangles for the current clip against the current clip plane
-			clip_triangles_to_plane(tmp, tris_current_clip, num_tris_current_clip, plane);
-			// Place all triangles along with the new ones back in the clip container
+			// Clip all current triangles for the current clip against the
+			// current clip plane
+			clip_triangles_to_plane(
+				tmp.data(), 
+				tris_current_clip.data(), 
+				num_tris_current_clip, plane
+			);
+			// Place all triangles along with the new ones back in the clip
+			// container
 			for (j = 0; j < num_tris_current_clip; j++)
 			{
 				tris_current_clip[j] = tmp[j];
 			}
 		}
-		// After clipping against all planes, add the result triangles to the final array of triangles
+		// After clipping against all planes, add the result triangles to the
+		// final array of triangles
 		for (i = 0; i < num_tris_current_clip; i++)
 		{
 			out_tris[(size_t)out_tri_count + (size_t)i] = tris_current_clip[i];
@@ -256,9 +267,12 @@ void Clipper::clip_triangles(
 	Logger::print(LOG_CATEGORY_CLIPPING, "Out triangles: " + std::to_string(out_tri_count));
 }
 
-void Clipper::clip_triangles_to_plane(Triangle tmp[],
-	const Triangle tris_current_clip[], int& num_tris_current_clip,
-	const EClipPlane& plane)
+void Clipper::clip_triangles_to_plane(
+	Triangle* tmp,
+	const Triangle* tris_current_clip, 
+	int& num_tris_current_clip,
+	const EClipPlane plane
+)
 {
 	ZoneScoped; // for tracy
 
@@ -280,12 +294,18 @@ void Clipper::clip_triangles_to_plane(Triangle tmp[],
 		else
 		{
 			// Clip the triangle against the current plane
-			glm::vec4 vertices[4];
-			tex2 texcoords[4];
-			float gouraud[4];
+			std::array<glm::vec4, 4> vertices;
+			std::array<tex2, 4> texcoords;
+			std::array<float, 4> gouraud;
 			int num_clip_verts = 0;
 			clip_triangle_to_plane(
-				triangle, plane, vertices, texcoords, gouraud, num_clip_verts);
+				triangle, 
+				plane, 
+				vertices.data(), 
+				texcoords.data(), 
+				gouraud.data(), 
+				num_clip_verts
+			);
 
 			// Clipped polygon is a triangle. No new polygons need to be created
 			if (num_clip_verts == 3)
@@ -342,44 +362,51 @@ void Clipper::clip_triangles_to_plane(Triangle tmp[],
 	num_tris_current_clip = num_new_tris;
 }
 
-void Clipper::clip_triangle_to_plane(const Triangle& triangle,
-	const EClipPlane& plane, glm::vec4 out_verts[], tex2 out_uvs[],
-	float out_gouraud[], int& num_clip_verts)
+void Clipper::clip_triangle_to_plane(
+	const Triangle& triangle,
+	EClipPlane plane,
+	glm::vec4* out_verts,
+	tex2* out_uvs,
+	float* out_gouraud,
+	int& num_clip_verts
+)
 {
 	ZoneScoped; // for tracy
 
 	// Intersection point between the two vertices and the plane
-	glm::vec4 intersection{};
+	glm::vec4 intersection;
 	// Interpolated UV coordinate
-	tex2 interp_uv{};
+	tex2 interp_uv;
 	// Interpolated Gouraud color
 	float interp_gouraud;
 	// Percentage factor for interpolating the intersection point and UVs
 	float t;
 
-	constexpr int num_verts = 3;
 	// Extract the vertices
-	glm::vec4 vertices[num_verts];
+	std::array<glm::vec4, NUM_VERTICES_PER_TRIANGLE> vertices;
+	//glm::vec4 vertices[NUM_VERTICES_PER_TRIANGLE];
 	vertices[0] = triangle.vertices[0].position;
 	vertices[1] = triangle.vertices[1].position;
 	vertices[2] = triangle.vertices[2].position;
 	// Extract the UVs
-	tex2 texcoords[num_verts];
+	std::array<tex2, NUM_VERTICES_PER_TRIANGLE> texcoords;
+	//tex2 texcoords[NUM_VERTICES_PER_TRIANGLE];
 	texcoords[0] = triangle.vertices[0].uv;
 	texcoords[1] = triangle.vertices[1].uv;
 	texcoords[2] = triangle.vertices[2].uv;
 	// Extract the Gouraud color
-	float gouraud[num_verts];
+	std::array<float, NUM_VERTICES_PER_TRIANGLE> gouraud;
+	//float gouraud[NUM_VERTICES_PER_TRIANGLE];
 	gouraud[0] = triangle.vertices[0].gouraud;
 	gouraud[1] = triangle.vertices[1].gouraud;
 	gouraud[2] = triangle.vertices[2].gouraud;
 
 	// Start with the last vertex as the previous vertex
-	glm::vec4 prev_vert = vertices[num_verts - 1];
+	glm::vec4 prev_vert = vertices[NUM_VERTICES_PER_TRIANGLE - 1];
 	glm::vec4 curr_vert;
-	tex2 prev_texcoord = texcoords[num_verts - 1];
+	tex2 prev_texcoord = texcoords[NUM_VERTICES_PER_TRIANGLE - 1];
 	tex2 curr_texcoord;
-	float prev_gouraud = gouraud[num_verts - 1];
+	float prev_gouraud = gouraud[NUM_VERTICES_PER_TRIANGLE - 1];
 	float curr_gouraud;
 
 	bool prev_inside = is_inside_plane(prev_vert, plane);
@@ -388,7 +415,7 @@ void Clipper::clip_triangle_to_plane(const Triangle& triangle,
 	// TODO: Handle degenerate triangle cases
 
 	// Loop through all the vertices of the input triangle
-	for (int i = 0; i < num_verts; i++)
+	for (int i = 0; i < NUM_VERTICES_PER_TRIANGLE; i++)
 	{
 		// Current vertex
 		curr_vert = vertices[i];
@@ -400,7 +427,7 @@ void Clipper::clip_triangle_to_plane(const Triangle& triangle,
 		if (prev_inside != curr_inside)
 		{
 			// Interpolate the vertex locations to find the intersection point
-			t = compute_intersect_ratio(curr_vert, prev_vert, plane);
+			t = compute_intersect_ratio(prev_vert, curr_vert, plane);
 			intersection = glm::lerp(prev_vert, curr_vert, t);
 			// Interpolate the UVS
 			interp_uv = tex2_lerp(prev_texcoord, curr_texcoord, t);
@@ -431,34 +458,30 @@ void Clipper::clip_triangle_to_plane(const Triangle& triangle,
 	}
 }
 
-bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane& plane)
+bool Clipper::is_unmodified(const Triangle& triangle, const EClipPlane plane)
 {
 	// Get the clip distance for the current plane for each of the vertices on
 	// the triangle
-	bool v0_inside = is_inside_plane(triangle.vertices[0].position, plane);
-	bool v1_inside = is_inside_plane(triangle.vertices[1].position, plane);
-	bool v2_inside = is_inside_plane(triangle.vertices[2].position, plane);
+	const bool v0_inside = is_inside_plane(triangle.vertices[0].position, plane);
+	const bool v1_inside = is_inside_plane(triangle.vertices[1].position, plane);
+	const bool v2_inside = is_inside_plane(triangle.vertices[2].position, plane);
 
 	// If all vertices are inside the plane, the triangle does not need
 	// to be clipped and can be passed to the next clip stage unmodified
-	if (v0_inside && v1_inside && v2_inside)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	const bool triangle_inside = v0_inside && v1_inside && v2_inside;
+	return triangle_inside;
 }
 
 /**
- * The clip space inequalities are as follows: no points are allowed in that don't satisfy the following:
+ * The clip space inequalities are as follows: no points are allowed in that
+ * don't satisfy the following:
  * -w <= x <= w (for the left and right clip planes)
  * -w <= y <= w (for the bottom and top clip planes)
  * -w <= z <= w (for the near and far clip planes)
- * We also want to clip against 0 < w, in order to prevent negative w coordinates from occuring.
+ * We also want to clip against 0 < w, in order to prevent negative w
+ * coordinates from occuring.
  */
-bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane& plane)
+bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane plane)
 {
 	bool result;
 	switch (plane)
@@ -494,31 +517,34 @@ bool Clipper::is_inside_plane(const glm::vec4& vertex, const EClipPlane& plane)
 }
 
 float Clipper::compute_intersect_ratio(
-	const glm::vec4& curr, const glm::vec4& prev, const EClipPlane& plane)
+	const glm::vec4& a, 
+	const glm::vec4& b, 
+	const EClipPlane plane
+)
 {
 	float result;
 	switch (plane)
 	{
 		case NEGATIVE_W_PLANE:
-			result = (prev.w - EPSILON) / (prev.w - curr.w);
+			result = (a.w - EPSILON) / (a.w - b.w);
 			return result;
 		case RIGHT_PLANE:
-			result = (prev.w - prev.x) / ((prev.w - prev.x) - (curr.w - curr.x));
+			result = (a.w - a.x) / ((a.w - a.x) - (b.w - b.x));
 			return result;
 		case LEFT_PLANE:
-			result = (prev.w + prev.x) / ((prev.w + prev.x) - (curr.w + curr.x));
+			result = (a.w + a.x) / ((a.w + a.x) - (b.w + b.x));
 			return result;
 		case TOP_PLANE:
-			result = (prev.w - prev.y) / ((prev.w - prev.y) - (curr.w - curr.y));
+			result = (a.w - a.y) / ((a.w - a.y) - (b.w - b.y));
 			return result;
 		case BOTTOM_PLANE:
-			result = (prev.w + prev.y) / ((prev.w + prev.y) - (curr.w + curr.y));
+			result = (a.w + a.y) / ((a.w + a.y) - (b.w + b.y));
 			return result;
 		case NEAR_PLANE:
-			result = (prev.w + prev.z) / ((prev.w + prev.z) - (curr.w + curr.z));
+			result = (a.w + a.z) / ((a.w + a.z) - (b.w + b.z));
 			return result;
 		case FAR_PLANE:
-			result = (prev.w - prev.z) / ((prev.w - prev.z) - (curr.w - curr.z));
+			result = (a.w - a.z) / ((a.w - a.z) - (b.w - b.z));
 			return result;
 		default:
 			assert(0.0f);

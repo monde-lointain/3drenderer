@@ -1,13 +1,16 @@
 #include "Application.h"
 
+#include <iostream>
+
+#include <tracy/tracy/Tracy.hpp>
+
 #include "Controller/PlayerController.h"
 #include "Graphics/GUI.h"
+#include "Logger/Logger.h"
 #include "Renderer/Renderer.h"
-#include "Renderer/Viewport.h"
+#include "Viewport/Viewport.h"
 #include "Window/Window.h"
 #include "World/World.h"
-#include <tracy/tracy/Tracy.hpp>
-#include <iostream>
 
 #ifdef _MSC_VER // Windows
 #include <SDL.h>
@@ -18,12 +21,15 @@
 Application::Application()
 {
 	std::cout << "Application constructor called.\n";
+
 	controller = std::make_shared<PlayerController>();
 	world = std::make_shared<World>();
 	window = std::make_shared<Window>();
 	viewport = std::make_shared<Viewport>();
 	renderer = std::make_shared<Renderer>();
 	gui = std::make_shared<GUI>();
+
+	running = false;
 }
 
 Application::~Application()
@@ -82,6 +88,8 @@ void Application::run()
 		float elapsed_time_for_frame = (float)(frame_end - start) / (float)SDL_GetPerformanceFrequency();
 
 		window->current_fps = 1.0f / elapsed_time_for_frame;
+
+		Logger::print(LOG_CATEGORY_PERF_COUNTER, "FPS: " + std::to_string(window->current_fps));
 	}
 }
 

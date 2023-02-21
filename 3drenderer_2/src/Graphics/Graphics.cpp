@@ -22,6 +22,12 @@
 #include <SDL2/SDL.h>
 #endif
 
+void Graphics::init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
+{
+	renderer = app_renderer;
+	viewport = app_viewport;
+}
+
 void Graphics::initialize_framebuffer()
 {
 	framebuffer = new uint32[(size_t)viewport->width * viewport->height];
@@ -40,10 +46,12 @@ void Graphics::initialize_framebuffer()
 	assert(framebuffer);
 }
 
-void Graphics::init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
+void Graphics::free_framebuffer() const
 {
-	renderer = app_renderer;
-	viewport = app_viewport;
+	// Free the resources allocated
+	delete[] framebuffer;
+	delete[] depth_buffer;
+	SDL_DestroyTexture(framebuffer_texture);
 }
 
 void Graphics::clear_framebuffer(uint32 color) const
@@ -404,7 +412,7 @@ void Graphics::draw_line_bresenham_3d_no_zfight(
 	}
 }
 
-void Graphics::draw_wireframe(const Triangle& triangle, const uint32 color)
+void Graphics::draw_wireframe(const Triangle& triangle, const uint32 color) const
 {
 	ZoneScoped; // for tracy
 
@@ -416,7 +424,7 @@ void Graphics::draw_wireframe(const Triangle& triangle, const uint32 color)
 	draw_line_bresenham(c, a, color);
 }
 
-void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32 color)
+void Graphics::draw_wireframe_3d(const Triangle& triangle, const uint32 color) const
 {
 	ZoneScoped; // for tracy
 
@@ -901,14 +909,6 @@ void Graphics::draw_gizmo(const Gizmo& gizmo)
 	draw_line_bresenham(z_start, z_end, Colors::CYAN);
 }
 
-void Graphics::free_framebuffer() const
-{
-	// Free the resources allocated
-	delete[] framebuffer;
-	delete[] depth_buffer;
-	SDL_DestroyTexture(framebuffer_texture);
-}
-
 bool Graphics::is_in_viewport(const glm::ivec2& p) const
 {
 	const bool x_in_viewport = p.x >= 0 && p.x < viewport->width;
@@ -953,6 +953,6 @@ uint32 Graphics::apply_intensity(const uint32 color, const float intensity)
 		(lrintf(g + 0.5f) << 8) | 
 		(lrintf(b + 0.5f) << 0) | 
 		(lrintf(a + 0.5f) << 24)
-		);
+	);
 	return out;
 }

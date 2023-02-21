@@ -64,8 +64,8 @@ struct Graphics
 	) const;
 
 	/** Wireframe drawing algorithms */
-	void draw_wireframe(const Triangle& triangle, uint32 color);
-	void draw_wireframe_3d(const Triangle& triangle, uint32 color);
+	void draw_wireframe(const Triangle& triangle, uint32 color) const;
+	void draw_wireframe_3d(const Triangle& triangle, uint32 color) const;
 
 	/** Solid drawing algorithms */
 	void draw_solid(

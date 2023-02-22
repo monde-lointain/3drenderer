@@ -99,13 +99,13 @@ void GUI::render()
     }
     ImGui::End();
 
-    // Performance counters log window
-    if (ImGui::Begin("Performance Counters", nullptr, ImGuiWindowFlags_NoCollapse))
-    {
-        std::vector<LogEntry>& perf_log = Logger::messages[LOG_CATEGORY_PERF_COUNTER];
-        print_log_messages(perf_log);
-    }
-    ImGui::End();
+    //// Performance counters log window
+    //if (ImGui::Begin("Performance Counters", nullptr, ImGuiWindowFlags_NoCollapse))
+    //{
+    //    std::vector<LogEntry>& perf_log = Logger::messages[LOG_CATEGORY_PERF_COUNTER];
+    //    print_log_messages(perf_log);
+    //}
+    //ImGui::End();
 
     // Light movement controls
     if (ImGui::Begin("Edit Light", nullptr, log_window_flags))

@@ -34,7 +34,7 @@ void World::load_level(const std::unique_ptr<Viewport>& viewport)
 	light.intensity = 1.0f;
 
 	// Load the starting mesh
-	std::unique_ptr<Mesh> mesh = create_mesh("assets/models/cube/cube.obj");
+	std::unique_ptr<Mesh> mesh = create_mesh("assets/models/robot/robot.obj");
 
 	// Add the mesh to the array of meshes
 	meshes.push_back(std::move(mesh));
@@ -51,7 +51,7 @@ void World::update()
 	// Update the position and rotation of the light
 	light.update();
 
-	const glm::vec3 scale(10.0f);
+	const glm::vec3 scale(1.0f);
 	const rot3 rotation(0.0f, x, 0.0f);
 	//const glm::vec3 translation(0.0f, 0.0f, 0.0f);
 

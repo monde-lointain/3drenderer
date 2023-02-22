@@ -92,7 +92,7 @@ void Application::run()
 
 		window->current_fps = 1.0f / time_elapsed_for_frame;
 
-		Logger::print(LOG_CATEGORY_PERF_COUNTER, "FPS: " + std::to_string(window->current_fps));
+		//Logger::print(LOG_CATEGORY_PERF_COUNTER, "FPS: " + std::to_string(window->current_fps));
 	}
 }
 

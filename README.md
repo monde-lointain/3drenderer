@@ -13,7 +13,3 @@ Libraries used:<br>
 [imgui](https://github.com/ocornut/imgui)<br>
 [fast_obj](https://github.com/thisistherk/fast_obj)<br>
 [tracy](https://github.com/wolfpld/tracy) (profiling)
-
-
-
-

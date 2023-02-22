@@ -58,15 +58,15 @@ struct Application
 	 */
 	std::shared_ptr<GUI> gui;
 
-	bool running;
+	bool running = false;
 
 	void initialize();
-	void setup();
+	void setup() const;
 	void run();
 
 	void input();
-	void update();
-	void render();
+	void update() const;
+	void render() const;
 
-	void destroy();
+	void destroy() const;
 };

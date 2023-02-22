@@ -1,11 +1,15 @@
 #include "Mesh.h"
 
 #define FAST_OBJ_IMPLEMENTATION
+
+#include <iostream>
+
+#include <fast_obj/fast_obj.h>
+
+#include "Texture.h"
 #include "../Triangle/Triangle.h"
 #include "../Utils/Colors.h"
 #include "../Utils/debug_helpers.h"
-#include <fast_obj/fast_obj.h>
-#include <iostream>
 
 #ifdef _MSC_VER // Windows
 #include <SDL_image.h>
@@ -13,8 +17,11 @@
 #include <SDL2/SDL_image.h>
 #endif
 
-Mesh::Mesh(glm::vec3 scale, rot3 rotation, glm::vec3 translation)
-	: Entity(scale, rotation, translation)
+Mesh::Mesh(
+	glm::vec3 scale, 
+	rot3 rotation, 
+	glm::vec3 translation
+) : Entity(scale, rotation, translation)
 {
 }
 
@@ -138,9 +145,9 @@ int Mesh::num_triangles()
 	return (int)triangles.size();
 }
 
-Mesh* create_mesh(const char* filename)
+std::unique_ptr<Mesh> create_mesh(const char* filename)
 {
-	Mesh* mesh = new Mesh;
+	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 	mesh->load_from_obj(filename);
 	if (!mesh)
 	{

@@ -28,8 +28,6 @@ Application::Application()
 	viewport = std::make_shared<Viewport>();
 	renderer = std::make_shared<Renderer>();
 	gui = std::make_shared<GUI>();
-
-	running = false;
 }
 
 Application::~Application()
@@ -46,7 +44,7 @@ void Application::initialize()
 	running = true;
 }
 
-void Application::setup()
+void Application::setup() const
 {
 	world->load_level(viewport); // Creates the camera, light, all the starting models...
 	controller->initialize(window, world, renderer); // Gives the controller all the relevant game objects it needs to access
@@ -64,38 +62,42 @@ void Application::run()
 	window->seconds_per_frame = 1.0f / (float)display_mode.refresh_rate;
 	window->current_fps = 1.0f / window->seconds_per_frame;
 
+	uint64 start, end;
+	uint32 ms_to_wait;
+	float time_elapsed, time_elapsed_for_frame;
+	uint64 frame_end;
+
 	while (running)
 	{
-		uint64 start = SDL_GetPerformanceCounter();
+		start = SDL_GetPerformanceCounter();
 		input();
 		update();
 		render();
 		FrameMark; // for tracy
-		uint64 end = SDL_GetPerformanceCounter();
+		end = SDL_GetPerformanceCounter();
 
-		float time_elapsed = (float)(end - start) / (float)SDL_GetPerformanceFrequency();
+		time_elapsed = (float)(end - start) / (float)SDL_GetPerformanceFrequency();
 
 		// If we still have time after updating the frame, wait to advance to
 		// the next one
 		if (time_elapsed < window->seconds_per_frame)
 		{
-			uint32 ms_to_wait = (uint32)((window->seconds_per_frame - time_elapsed) * 1000.0f);
+			ms_to_wait = (uint32)((window->seconds_per_frame - time_elapsed) * 1000.0f);
 			SDL_Delay(ms_to_wait);
 		}
 
 		// Compute the current FPS based on the frame time
-		uint64 frame_end = SDL_GetPerformanceCounter();
-		float elapsed_time_for_frame = (float)(frame_end - start) / (float)SDL_GetPerformanceFrequency();
+		frame_end = SDL_GetPerformanceCounter();
+		time_elapsed_for_frame = (float)(frame_end - start) / (float)SDL_GetPerformanceFrequency();
 
-		window->current_fps = 1.0f / elapsed_time_for_frame;
+		window->current_fps = 1.0f / time_elapsed_for_frame;
 
 		Logger::print(LOG_CATEGORY_PERF_COUNTER, "FPS: " + std::to_string(window->current_fps));
 	}
 }
 
-void Application::destroy()
+void Application::destroy() const
 {
-	world->destroy(); // Destroys all entities in the world
 	renderer->destroy(); // Frees the framebuffer, z buffer and framebuffer SDL texture
 	gui->destroy(); // Destroys the imgui SDL context
 	window->destroy(); // Destroys SDL window, renderer and SDL itself
@@ -139,12 +141,12 @@ void Application::input()
 	}
 }
 
-void Application::update()
+void Application::update() const
 {
 	world->update();
 }
 
-void Application::render()
+void Application::render() const
 {
 	renderer->render();
 	gui->render();

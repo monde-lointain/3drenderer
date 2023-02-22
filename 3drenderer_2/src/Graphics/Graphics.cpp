@@ -703,8 +703,8 @@ void draw_textured(
 				v *= ABC;
 
 				// Look up texel value and set pixel color
-				tex_x = abs(lrintf(u * (float)texture->width)) % texture->width;
-				tex_y = abs(lrintf(v * (float)texture->height)) % texture->height;
+				tex_x = abs((int)(u * (float)texture->width)) % texture->width;
+				tex_y = abs((int)(v * (float)texture->height)) % texture->height;
 				tex_index = texture->width * (texture->height - tex_y - 1) + tex_x;
 				uint32 color = texture->pixels[tex_index];
 
@@ -932,7 +932,7 @@ bool is_top_left(const glm::ivec2& a, const glm::ivec2& b)
 uint32 get_zbuffer_color(const float val)
 {
 	// Convert to 8 bits (0-255)
-	const uint8 color = (uint8)lrintf(val * 255.0f + 0.5f);
+	const uint8 color = (uint8)(val * 255.0f + 0.5f);
 	const uint8 alpha = 0xFF;
 	// Return the 32-bit BGRA value
 	const uint32 result = (color << 24) | (color << 16) | (color << 8) | alpha;
@@ -955,10 +955,10 @@ uint32 apply_intensity(const uint32 color, const float intensity)
 
 	// Repack
 	const uint32 out = (
-		(lrintf(r + 0.5f) << 16) | 
-		(lrintf(g + 0.5f) << 8) | 
-		(lrintf(b + 0.5f) << 0) | 
-		(lrintf(a + 0.5f) << 24)
+		((uint32)(r + 0.5f) << 16) | 
+		((uint32)(g + 0.5f) << 8) |
+		((uint32)(b + 0.5f) << 0) |
+		((uint32)(a + 0.5f) << 24)
 	);
 	return out;
 }

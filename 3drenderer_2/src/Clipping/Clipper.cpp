@@ -221,11 +221,9 @@ void clip_triangles(
 	// The triangles created for single triangle after clipping against all clip
 	// planes
 	std::array<Triangle, MAX_TRIANGLES_PER_CLIP> tris_current_clip;
-	//Triangle tris_current_clip[MAX_TRIANGLES_PER_CLIP];
 	int num_tris_current_clip = 0;
 	// Temporary container to store the triangles clipped from a single plane in
 	std::array<Triangle, MAX_TRIANGLES_PER_CLIP> tmp;
-	//Triangle tmp[MAX_TRIANGLES_PER_CLIP];
 
 	int i, j;
 	// Loop over each triangle
@@ -374,30 +372,18 @@ void clip_triangle_to_plane(
 {
 	ZoneScoped; // for tracy
 
-	// Intersection point between the two vertices and the plane
-	glm::vec4 intersection;
-	// Interpolated UV coordinate
-	tex2 interp_uv;
-	// Interpolated Gouraud color
-	float interp_gouraud;
-	// Percentage factor for interpolating the intersection point and UVs
-	float t;
-
 	// Extract the vertices
 	std::array<glm::vec4, NUM_VERTICES_PER_TRIANGLE> vertices;
-	//glm::vec4 vertices[NUM_VERTICES_PER_TRIANGLE];
 	vertices[0] = triangle.vertices[0].position;
 	vertices[1] = triangle.vertices[1].position;
 	vertices[2] = triangle.vertices[2].position;
 	// Extract the UVs
 	std::array<tex2, NUM_VERTICES_PER_TRIANGLE> texcoords;
-	//tex2 texcoords[NUM_VERTICES_PER_TRIANGLE];
 	texcoords[0] = triangle.vertices[0].uv;
 	texcoords[1] = triangle.vertices[1].uv;
 	texcoords[2] = triangle.vertices[2].uv;
 	// Extract the Gouraud color
 	std::array<float, NUM_VERTICES_PER_TRIANGLE> gouraud;
-	//float gouraud[NUM_VERTICES_PER_TRIANGLE];
 	gouraud[0] = triangle.vertices[0].gouraud;
 	gouraud[1] = triangle.vertices[1].gouraud;
 	gouraud[2] = triangle.vertices[2].gouraud;
@@ -412,6 +398,11 @@ void clip_triangle_to_plane(
 
 	bool prev_inside = is_inside_plane(prev_vert, plane);
 	bool curr_inside;
+
+	glm::vec4 intersection;
+	tex2 interp_uv;
+	float interp_gouraud;
+	float t;
 
 	// TODO: Handle degenerate triangle cases
 

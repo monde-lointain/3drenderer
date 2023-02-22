@@ -54,7 +54,7 @@ void Renderer::render()
 {
 	ZoneScoped; // for tracy
 
-	clear_framebuffer(Colors::MAGENTA);
+	clear_framebuffer(Colors::BLACK);
 	clear_z_buffer();
 
 	// Render all triangles in the scene
@@ -102,15 +102,15 @@ void Renderer::render_triangles_in_scene()
 
 	ZoneNamedN(rasterize_triangles_scope, "Rasterization", true); // for tracy
 
-// Set the number of threads to execute to the total number of physical cores on
-// the machine, plus one. Note that this function assumes that the PC has two
-// logical cores per physical core
-#pragma omp parallel \
-	num_threads((std::thread::hardware_concurrency() / 2) + 1) \
-	default(none) \
-	shared(num_triangles_to_rasterize)
-// Give each thread ten triangles at a time
-#pragma omp for schedule(static, NUM_TRIANGLES_PER_BATCH)
+//// Set the number of threads to execute to the total number of physical cores on
+//// the machine, plus one. Note that this function assumes that the PC has two
+//// logical cores per physical core
+//#pragma omp parallel \
+//	num_threads((std::thread::hardware_concurrency() / 2) + 1) \
+//	default(none) \
+//	shared(num_triangles_to_rasterize)
+//// Give each thread ten triangles at a time
+//#pragma omp for schedule(static, NUM_TRIANGLES_PER_BATCH)
 	for (int i = 0; i < num_triangles_to_rasterize; i++)
 	{
 		ZoneNamedN(render_triangle_scope, "Render triangle", true); // for tracy

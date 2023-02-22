@@ -76,22 +76,6 @@ void Renderer::render_triangles_in_scene()
 {
 	ZoneScoped; // for tracy
 
-	for (Triangle& triangle : world->triangles_in_scene)
-	{
-		if (display_face_normals)
-		{
-			draw_face_normal(triangle);
-		}
-
-		for (Vertex& vertex : triangle.vertices)
-		{
-			// Transform the point from camera space to clip space
-			Math3D::project(vertex.position, world->camera.projection_matrix);
-		}
-	}
-
-	ZoneNamedN(clip_fill_scope, "Clipping and filling", true); // for tracy
-
 	int num_triangles_to_rasterize = 0;
 	// Clip all the triangles and stick them in a new array
 	clip_triangles(

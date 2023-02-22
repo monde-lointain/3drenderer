@@ -163,6 +163,7 @@ void Camera::set_view()
 {
 	glm::vec3 target = translation + direction;
 	view_matrix = glm::lookAt(translation, target, world_up);
+	vp_matrix = projection_matrix * view_matrix;
 }
 
 void Camera::set_projection(ProjectionMode mode)

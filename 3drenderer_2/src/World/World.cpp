@@ -44,15 +44,6 @@ void World::update()
 {
 	ZoneScoped; // for tracy
 
-	/**
-	 * TODO: 
-	 * When we're sure everything with the pipeline is finalized we can move
-	 * the projection matrix into here too and multiply all the entities
-	 * modelview matrices by that as well, so we don't have to loop over all of
-	 * them twice. Everything after from there on though (starting with
-	 * clipping) will be the responsibility of the renderer
-	 */
-
 	// Update the position and rotation of the camera
 	camera.update();
 	// Update the view matrix
@@ -80,7 +71,9 @@ void World::update()
 // not to access them after the unique_ptr goes out of scope!
 void World::transform_mesh(Mesh* mesh)
 {
-	glm::vec3 ab, ca; // Line segments to compute the face normal with
+	// Line segments for computing the face normal
+	glm::vec3 ab, ca;
+
 	// Loop over all the triangles in the mesh
 	for (const Triangle& triangle : mesh->triangles)
 	{
@@ -110,12 +103,13 @@ void World::transform_mesh(Mesh* mesh)
 
 		for (Vertex& vertex : transformed_triangle.vertices)
 		{
-			// Transform the vertices by the view matrix
-			Math3D::transform_point(vertex.position, camera.view_matrix);
-			// Rotate the vertex normals by the view matrix
-			Math3D::rotate_normal(vertex.normal, camera.view_matrix);
+			// Transform the vertices by the concatenated view-projection matrix
+			Math3D::transform_point(vertex.position, camera.vp_matrix);
+			// Rotate the vertex normals by the concatenated view-projection matrix
+			Math3D::rotate_normal(vertex.normal, camera.vp_matrix);
 		}
 
+		/* Clip space */
 		// Add the transformed triangle to the bin of triangles to be rendered
 		triangles_in_scene.push_back(transformed_triangle);
 	}

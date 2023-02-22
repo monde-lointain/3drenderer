@@ -145,7 +145,7 @@
     <GenerateManifest />
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*</ClangTidyChecks>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-misc-non-private-member-variables-in-classes,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-implicit-bool-conversion,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest />
@@ -153,7 +153,7 @@
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*</ClangTidyChecks>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-misc-non-private-member-variables-in-classes,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-implicit-bool-conversion,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Tracy|x64'">
     <GenerateManifest />
@@ -161,7 +161,7 @@
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*</ClangTidyChecks>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-misc-non-private-member-variables-in-classes,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-implicit-bool-conversion,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'">
     <GenerateManifest />
@@ -169,7 +169,7 @@
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)C:\SDL2\lib\x64;</LibraryPath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
-    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*</ClangTidyChecks>
+    <ClangTidyChecks>*,-abseil-*,-altera-*,-android-*,-boost-*,-darwin-*,-fuchsia-*,-google-*,-linuxkernel-*,-llvm-*,-llvmlibc-*,-objc-*,-zircon-*,-bugprone-easily-swappable-parameters,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-init-variables,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-hicpp-signed-bitwise,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-misc-non-private-member-variables-in-classes,-modernize-use-auto,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-implicit-bool-conversion,-readability-isolate-declaration,-readability-magic-numbers,-readability-uppercase-literal-suffix</ClangTidyChecks>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

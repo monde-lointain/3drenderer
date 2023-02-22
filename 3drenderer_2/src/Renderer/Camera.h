@@ -66,6 +66,7 @@ struct Camera : public Entity
 
 	glm::mat4 view_matrix;
 	glm::mat4 projection_matrix;
+	glm::mat4 vp_matrix;
 	ProjectionMode projection_mode;
 
 	float mouse_sensitivity;

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "../Utils/3d_types.h"
+#include <array>
 #include <glm/vec4.hpp>
+#include "../Utils/3d_types.h"
 
 struct Line3D
 {
-	glm::vec4 points[2];
+	std::array<glm::vec4, 2> points;
 	uint32 color;
 	bool should_render = true;
 };

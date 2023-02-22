@@ -2,7 +2,7 @@
 
 #include <tracy/tracy/Tracy.hpp>
 
-#include "../Renderer/Camera.h"
+#include "../Camera/Camera.h"
 #include "../Viewport/Viewport.h"
 #include "../Utils/math_helpers.h"
 

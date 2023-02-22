@@ -1,6 +1,6 @@
 #include "PlayerController.h"
 
-#include "../Renderer/Camera.h"
+#include "../Camera/Camera.h"
 #include "../Renderer/Renderer.h"
 #include "../Window/Window.h"
 #include "../World/World.h"

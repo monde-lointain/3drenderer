@@ -15,21 +15,6 @@
 Camera::Camera(glm::vec3 position, rot3 rotation)
 	: Entity(glm::vec3(1.0f), rotation, position)
 {
-	this->direction = glm::vec3(0.0f, 0.0f, 0.0f);
-	this->move_direction = direction;
-	this->world_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	this->up = world_up;
-	this->right = glm::vec3(1.0f, 0.0f, 0.0f);
-	this->speed = 0.1f;
-	this->move_state = NOT_MOVING;
-	this->fov = 0.0f;
-	this->aspect = 0.0f;
-	this->znear = 0.0f;
-	this->zfar = 0.0f;
-	this->mouse_sensitivity = 0.15f;
-	this->window_clicked = false;
-	this->mouse_has_position = false;
-	this->input_mode = MOUSE_INPUT_DISABLED;
 }
 
 void Camera::update()
@@ -66,8 +51,8 @@ void Camera::process_mouse_movement()
 	}
 
 	// Adjust to be relative to the center of the window
-	float xoffset = (float)x * mouse_sensitivity;
-	float yoffset = (float)y * mouse_sensitivity;
+	const float xoffset = (float)x * mouse_sensitivity;
+	const float yoffset = (float)y * mouse_sensitivity;
 
 	rotation.yaw += xoffset;
 	// We're drawing from the bottom up, so we need to flip this, since SDL
@@ -87,8 +72,8 @@ void Camera::process_mouse_movement()
 
 void Camera::update_camera_vectors()
 {
-	float yaw = glm::radians(rotation.yaw);
-	float pitch = glm::radians(rotation.pitch);
+	const float yaw = glm::radians(rotation.yaw);
+	const float pitch = glm::radians(rotation.pitch);
 	glm::vec3 front(0.0f);
 	front.x = cos(yaw) * cos(pitch);
 	front.y = sin(pitch);
@@ -161,7 +146,7 @@ void Camera::set_move_state(EMovementState state, bool set)
 
 void Camera::set_view()
 {
-	glm::vec3 target = translation + direction;
+	const glm::vec3 target = translation + direction;
 	view_matrix = glm::lookAt(translation, target, world_up);
 	vp_matrix = projection_matrix * view_matrix;
 }

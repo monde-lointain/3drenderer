@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
 struct LogEntry;
@@ -12,7 +11,7 @@ struct GUI
 {
 	void initialize(Window* window_, World* world_);
 	void process_input(SDL_Event& event);
-	void render();
+	void render() const;
 	static void print_log_messages(std::vector<LogEntry>& log);
 	static void destroy();
 

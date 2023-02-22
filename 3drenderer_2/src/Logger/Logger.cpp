@@ -21,7 +21,8 @@ void Logger::print(LogCategory category, const std::string& message)
 	entry.type = LOG_INFO;
 	entry.message = message;
 
-	if (messages.count(category) == 0)
+	// Create a new vector if no messages exist for a category yet
+	if (!messages.contains(category))
 	{
 		messages[category] = std::vector<LogEntry>();
 	}
@@ -35,7 +36,8 @@ void Logger::info(LogCategory category, const std::string& message)
 	entry.type = LOG_INFO;
 	entry.message = "INFO: " + message;
 
-	if (messages.count(category) == 0)
+	// Create a new vector if no messages exist for a category yet
+	if (!messages.contains(category))
 	{
 		messages[category] = std::vector<LogEntry>();
 	}
@@ -49,7 +51,8 @@ void Logger::error(LogCategory category, const std::string& message)
 	entry.type = LOG_ERROR;
 	entry.message = "ERROR: " + message;
 
-	if (messages.count(category) == 0)
+	// Create a new vector if no messages exist for a category yet
+	if (!messages.contains(category))
 	{
 		messages[category] = std::vector<LogEntry>();
 	}

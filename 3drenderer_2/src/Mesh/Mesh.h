@@ -22,12 +22,12 @@ struct Mesh : Entity
 	~Mesh() = default;
 
 	void load_from_obj(const char* filename);
-	std::shared_ptr<Texture> load_texture(const char* filename);
 	void rotate(rot3 rotation);
-	int num_triangles();
+	int num_triangles() const;
 
 	std::vector<Triangle> triangles;
 	std::vector<std::shared_ptr<Texture>> textures;
 };
 
 std::unique_ptr<Mesh> create_mesh(const char* filename);
+std::shared_ptr<Texture> load_texture(const char* filename);

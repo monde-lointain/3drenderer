@@ -36,13 +36,13 @@ void Mesh::load_from_obj(const char* filename)
 	}
 
 	// Allocate memory for the texture pointer array
-	int num_materials = fast_mesh->material_count;
+	const int num_materials = (int)fast_mesh->material_count;
 	textures.resize(num_materials * sizeof(Texture*));
 
 	// For each mesh
 	for (uint32 i = 0; i < fast_mesh->object_count; i++)
 	{
-		fastObjGroup object = fast_mesh->objects[i];
+		const fastObjGroup object = fast_mesh->objects[i];
 		int idx = 0;
 
 		// For each triangle
@@ -51,7 +51,7 @@ void Mesh::load_from_obj(const char* filename)
 			Triangle triangle;
 
 			// Load the texture from the material.
-			int material_index = fast_mesh->face_materials[object.face_offset + j];
+			const int material_index = fast_mesh->face_materials[object.face_offset + j];
 
 			// Only load if the texture is not already loaded
 			if (!textures[material_index])
@@ -59,7 +59,7 @@ void Mesh::load_from_obj(const char* filename)
 				char* material_filename = fast_mesh->materials[material_index].map_Kd.path;
 				if (material_filename)
 				{
-					std::shared_ptr<Texture> texture = load_texture(material_filename);
+					const std::shared_ptr<Texture> texture = load_texture(material_filename);
 					textures[material_index] = texture;
 				}
 				else
@@ -72,7 +72,7 @@ void Mesh::load_from_obj(const char* filename)
 
 			for (uint32 k = 0; k < 3; k++)
 			{
-				fastObjIndex index = fast_mesh->indices[object.index_offset + idx];
+				const fastObjIndex index = fast_mesh->indices[object.index_offset + idx];
 
 				triangle.vertices[k].position = glm::vec4(
 					fast_mesh->positions[3 * index.p + 0],
@@ -104,7 +104,30 @@ void Mesh::load_from_obj(const char* filename)
 	fast_obj_destroy(fast_mesh);
 }
 
-std::shared_ptr<Texture> Mesh::load_texture(const char* filename)
+void Mesh::rotate(rot3 amount)
+{
+	rotation.pitch += amount.pitch; // x
+	rotation.yaw += amount.yaw; // y
+	rotation.roll += amount.roll; // z
+}
+
+int Mesh::num_triangles() const
+{
+	return (int)triangles.size();
+}
+
+std::unique_ptr<Mesh> create_mesh(const char* filename)
+{
+	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
+	mesh->load_from_obj(filename);
+	if (!mesh)
+	{
+		return nullptr;
+	}
+	return mesh;
+}
+
+std::shared_ptr<Texture> load_texture(const char* filename)
 {
 	// Allocate the Texture object
 	std::shared_ptr<Texture> texture = std::make_unique<Texture>();
@@ -127,31 +150,8 @@ std::shared_ptr<Texture> Mesh::load_texture(const char* filename)
 	texture->pixels = std::make_unique<uint32[]>(surface->w * surface->h);
 	memcpy(texture->pixels.get(), surface->pixels, surface->w * surface->h * sizeof(uint32));
 
-	// Free the created surface now that we're done with ti
+	// Free the created surface now that we're done with it
 	SDL_FreeSurface(surface);
 
 	return texture;
-}
-
-void Mesh::rotate(rot3 amount)
-{
-	rotation.pitch += amount.pitch; // x
-	rotation.yaw += amount.yaw; // y
-	rotation.roll += amount.roll; // z
-}
-
-int Mesh::num_triangles()
-{
-	return (int)triangles.size();
-}
-
-std::unique_ptr<Mesh> create_mesh(const char* filename)
-{
-	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
-	mesh->load_from_obj(filename);
-	if (!mesh)
-	{
-		return nullptr;
-	}
-	return mesh;
 }

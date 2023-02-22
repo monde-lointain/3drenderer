@@ -3,14 +3,12 @@
 #include <iomanip>
 #include <sstream>
 
-rot3::rot3(float pitch, float yaw, float roll)
+rot3::rot3(float pitch_, float yaw_, float roll_)
+	: pitch(pitch_), yaw(yaw_), roll(roll_)
 {
-	this->pitch = pitch;
-	this->yaw = yaw;
-	this->roll = roll;
 }
 
-std::string rot3::to_string(int precision)
+std::string rot3::to_string(int precision) const
 {
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(precision);

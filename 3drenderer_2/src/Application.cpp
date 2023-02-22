@@ -5,7 +5,7 @@
 #include <tracy/tracy/Tracy.hpp>
 
 #include "Controller/PlayerController.h"
-#include "Graphics/GUI.h"
+#include "GUI/GUI.h"
 #include "Logger/Logger.h"
 #include "Renderer/Renderer.h"
 #include "Viewport/Viewport.h"

@@ -64,7 +64,7 @@ void GUI::process_input(SDL_Event& event)
     io.MouseDown[1] = buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);
 }
 
-void GUI::render()
+void GUI::render() const
 {
     ZoneScoped; // for tracy
 

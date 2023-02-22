@@ -1,8 +1,8 @@
 #pragma once
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "Rotator.h"
 

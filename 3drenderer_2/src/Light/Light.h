@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../Entity/Entity.h"
-#include "../Line/Line3D.h"
-#include "../Math/Rotator.h"
-#include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
+#include "../Line/Line3D.h"
+#include "../Math/Rotator.h"
+
 struct Light
 {
-	Light(glm::vec3 translation = glm::vec3(0.0f),
-		  rot3 rotation = rot3(0.0f, 0.0f, 0.0f),
-		  float intensity = 0.0f);
-	~Light() = default;
+	Light(
+		glm::vec3 translation_ = glm::vec3(0.0f), 
+		rot3 rotation_ = rot3(0.0f, 0.0f, 0.0f),
+		float intensity_ = 0.0f
+	);
 
 	void update();
 

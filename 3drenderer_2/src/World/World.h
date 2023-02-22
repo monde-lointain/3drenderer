@@ -5,11 +5,11 @@
 
 #include <glm/mat4x4.hpp>
 
+#include "../Camera/Camera.h"
 #include "../Light/Light.h"
+#include "../Mesh/Gizmo.h"
 #include "../Mesh/Mesh.h"
 #include "../Triangle/Triangle.h"
-#include "../Renderer/Camera.h"
-#include "../Renderer/Gizmo.h"
 
 struct Line3D;
 struct Viewport;

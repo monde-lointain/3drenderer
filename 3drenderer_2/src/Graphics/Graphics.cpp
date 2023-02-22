@@ -9,8 +9,8 @@
 #include <vectorclass/vectorclass.h>
 
 #include "../Math/Math3D.h"
+#include "../Mesh/Gizmo.h"
 #include "../Mesh/Texture.h"
-#include "../Renderer/Gizmo.h"
 #include "../Renderer/Renderer.h"
 #include "../Viewport/Viewport.h"
 #include "../Triangle/Triangle.h"

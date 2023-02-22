@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Utils/3d_types.h"
 #include <memory>
+#include "../Utils/3d_types.h"
 
 struct Texture
 {

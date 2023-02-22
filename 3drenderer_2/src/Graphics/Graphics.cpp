@@ -22,16 +22,16 @@
 #include <SDL2/SDL.h>
 #endif
 
-std::shared_ptr<Viewport> viewport;
+Viewport* viewport;
 SDL_Renderer* renderer = nullptr;
 uint32* framebuffer = nullptr;
 SDL_Texture* framebuffer_texture = nullptr;
 float* depth_buffer = nullptr;
 
-void graphics_init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport)
+void graphics_init(SDL_Renderer* renderer_, Viewport* viewport_)
 {
-	renderer = app_renderer;
-	viewport = std::move(app_viewport);
+	renderer = renderer_;
+	viewport = viewport_;
 }
 
 void initialize_framebuffer()

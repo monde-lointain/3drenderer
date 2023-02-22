@@ -1,14 +1,15 @@
 #pragma once
 
+#include <array>
+
 #include "../Line/Line3D.h"
 
 struct Gizmo
 {
 	Gizmo();
-	~Gizmo() = default;
 
 	void reset();
 
-	Line3D bases[3];
+	std::array<Line3D, 3> bases;
 };
 

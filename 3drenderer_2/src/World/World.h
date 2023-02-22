@@ -1,13 +1,15 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
+#include <glm/mat4x4.hpp>
+
 #include "../Light/Light.h"
 #include "../Mesh/Mesh.h"
 #include "../Triangle/Triangle.h"
 #include "../Renderer/Camera.h"
 #include "../Renderer/Gizmo.h"
-#include <glm/mat4x4.hpp>
-#include <memory>
-#include <vector>
 
 struct Line3D;
 struct Viewport;
@@ -15,7 +17,7 @@ struct Triangle;
 
 struct World
 {
-	void load_level(const std::shared_ptr<Viewport>& viewport);
+	void load_level(const std::unique_ptr<Viewport>& viewport);
 	void update();
 
 	Camera camera;

@@ -1,13 +1,14 @@
 #include "GUI.h"
 
-#include "../Logger/Logger.h"
-#include "../Window/Window.h"
-#include "../World/World.h"
 #include <glm/trigonometric.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_sdlrenderer.h>
 #include <tracy/tracy/Tracy.hpp>
+
+#include "../Logger/Logger.h"
+#include "../Window/Window.h"
+#include "../World/World.h"
 
 #ifdef _MSC_VER // Windows
 #include <SDL.h>
@@ -15,10 +16,10 @@
 #include <SDL2/SDL.h>
 #endif
 
-void GUI::initialize(std::shared_ptr<Window> app_window, std::shared_ptr<World> app_world)
+void GUI::initialize(Window* window_, World* world_)
 {
-    window = app_window;
-    world = app_world;
+    window = window_;
+    world = world_;
 
     ImGui::CreateContext();
 
@@ -57,7 +58,7 @@ void GUI::process_input(SDL_Event& event)
     ImGui_ImplSDL2_ProcessEvent(&event);
     ImGuiIO& io = ImGui::GetIO();
     int mouse_x, mouse_y;
-    const int buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+    const uint32 buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
     io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);
     io.MouseDown[0] = buttons & SDL_BUTTON(SDL_BUTTON_LEFT);
     io.MouseDown[1] = buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);
@@ -74,7 +75,7 @@ void GUI::render()
     // Handling logging
     
     // Camera log window
-    ImGuiWindowFlags log_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse;
+    const ImGuiWindowFlags log_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse;
 	if (ImGui::Begin("Camera Log", nullptr, log_window_flags))
     {
         std::vector<LogEntry>& camera_log = Logger::messages[LOG_CATEGORY_CAMERA];
@@ -136,7 +137,6 @@ void GUI::render()
         world->light.rotation.pitch = in_pitch;
         world->light.rotation.yaw = in_yaw;
         world->light.rotation.roll = in_roll;
-        //ImGui::SliderAngle("slider angle", &angle);
     }
     ImGui::End();
 

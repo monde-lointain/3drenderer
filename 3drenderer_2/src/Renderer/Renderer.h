@@ -15,9 +15,11 @@ struct World;
 
 struct Renderer
 {
-	void initialize(std::shared_ptr<Window> app_window,
-		            std::shared_ptr<Viewport> app_viewport,
-		            std::shared_ptr<World> app_world);
+	void initialize(
+		Window* window_, 
+		Viewport* viewport_, 
+		World* world_
+	);
 	void render();
 	static void display_frame();
 	static void destroy();
@@ -25,9 +27,9 @@ struct Renderer
 	void set_render_mode(ERenderMode mode);
 	void set_shading_mode(EShadingMode mode);
 
-	std::shared_ptr<Viewport> viewport;
-	std::shared_ptr<Window> window;
-	std::shared_ptr<World> world;
+	Viewport* viewport;
+	Window* window;
+	World* world;
 
 	std::unique_ptr<std::array<Triangle, MAX_TRIANGLES>> triangles_to_rasterize;
 

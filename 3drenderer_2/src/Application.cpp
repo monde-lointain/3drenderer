@@ -22,12 +22,12 @@ Application::Application()
 {
 	std::cout << "Application constructor called.\n";
 
-	controller = std::make_shared<PlayerController>();
-	world = std::make_shared<World>();
-	window = std::make_shared<Window>();
-	viewport = std::make_shared<Viewport>();
-	renderer = std::make_shared<Renderer>();
-	gui = std::make_shared<GUI>();
+	controller = std::make_unique<PlayerController>();
+	world = std::make_unique<World>();
+	window = std::make_unique<Window>();
+	viewport = std::make_unique<Viewport>();
+	renderer = std::make_unique<Renderer>();
+	gui = std::make_unique<GUI>();
 }
 
 Application::~Application()
@@ -37,9 +37,9 @@ Application::~Application()
 
 void Application::initialize()
 {
-	window->initialize(viewport); // Initializes SDL and the SDL window and renderer
-	gui->initialize(window, world); // Creates the ImGui context and sets up for SDL
-	renderer->initialize(window, viewport, world); // Initializes the framebuffer and z buffer and assigns to the renderer the viewport, window and world pointers
+	window->initialize(viewport.get()); // Initializes SDL and the SDL window and renderer
+	gui->initialize(window.get(), world.get()); // Creates the ImGui context and sets up for SDL
+	renderer->initialize(window.get(), viewport.get(), world.get()); // Initializes the framebuffer and z buffer and assigns to the renderer the viewport, window and world pointers
 
 	running = true;
 }
@@ -47,7 +47,7 @@ void Application::initialize()
 void Application::setup() const
 {
 	world->load_level(viewport); // Creates the camera, light, all the starting models...
-	controller->initialize(window, world, renderer); // Gives the controller all the relevant game objects it needs to access
+	controller->initialize(window.get(), world.get(), renderer.get()); // Gives the controller all the relevant game objects it needs to access
 }
 
 void Application::run()
@@ -99,7 +99,7 @@ void Application::run()
 void Application::destroy() const
 {
 	renderer->destroy(); // Frees the framebuffer, z buffer and framebuffer SDL texture
-	gui->destroy(); // Destroys the imgui SDL context
+	GUI::destroy(); // Destroys the imgui SDL context
 	window->destroy(); // Destroys SDL window, renderer and SDL itself
 }
 

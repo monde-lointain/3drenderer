@@ -23,15 +23,15 @@
 
 
 void Renderer::initialize(
-	std::shared_ptr<Window> app_window,
-	std::shared_ptr<Viewport> app_viewport,
-	std::shared_ptr<World> app_world
+	Window* window_,
+	Viewport* viewport_,
+	World* world_
 )
 {
 	// Assign the window, viewport and world pointers
-	viewport = std::move(app_viewport);
-	window = std::move(app_window);
-	world = std::move(app_world);
+	viewport = viewport_;
+	window = window_;
+	world = world_;
 
 	graphics_init(window->renderer, viewport);
 	initialize_framebuffer();
@@ -111,7 +111,7 @@ void Renderer::render_triangles_in_scene()
 			// Perform perspective divide
 			Math3D::to_ndc(vertex.position, vertex.position.w);
 			// Scale into view
-			Math3D::to_screen_space(vertex.position, viewport, world->camera);
+			Math3D::to_screen_space(vertex.position, viewport);
 		}
 
 		// Perform backface culling
@@ -155,7 +155,7 @@ void Renderer::render_lines() const
 			Math3D::to_ndc(point, one_over_w);
 
 			// Scale into view
-			Math3D::to_screen_space(point, viewport, world->camera);
+			Math3D::to_screen_space(point, viewport);
 		}
 
 		// Draw the line
@@ -245,8 +245,8 @@ void Renderer::draw_face_normal(const Triangle& triangle) const
 	end.y += (triangle.face_normal.y * normal_length);
 	end.z += (triangle.face_normal.z * normal_length);
 
-	Math3D::project_point(center, world->camera.projection_matrix, viewport, world->camera);
-	Math3D::project_point(end, world->camera.projection_matrix, viewport, world->camera);
+	Math3D::project_point(center, world->camera.projection_matrix, viewport);
+	Math3D::project_point(end, world->camera.projection_matrix, viewport);
 
 	const glm::ivec2 center_(lrintf(center.x), lrintf(center.y));
 	const glm::ivec2 end_(lrintf(end.x), lrintf(end.y));
@@ -255,17 +255,18 @@ void Renderer::draw_face_normal(const Triangle& triangle) const
 
 	switch (render_mode)
 	{
-	case VERTICES_ONLY:
-	case WIREFRAME:
-	case WIREFRAME_VERTICES:
-		draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::WHITE);
-		break;
-	case SOLID:
-	case SOLID_WIREFRAME:
-	case TEXTURED:
-	case TEXTURED_WIREFRAME:
-		draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::GREEN);
-		break;
+		case VERTICES_ONLY:
+		case WIREFRAME:
+		case WIREFRAME_VERTICES:
+			draw_line_bresenham_3d(
+				center_, end_, center_z, end_z, Colors::WHITE);
+			break;
+		case SOLID:
+		case SOLID_WIREFRAME:
+		case TEXTURED:
+		case TEXTURED_WIREFRAME:
+			draw_line_bresenham_3d(center_, end_, center_z, end_z, Colors::GREEN);
+			break;
 	}
 }
 

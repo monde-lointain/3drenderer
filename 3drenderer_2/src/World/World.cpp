@@ -7,7 +7,7 @@
 #include "../Viewport/Viewport.h"
 #include "../Utils/string_ops.h"
 
-void World::load_level(const std::shared_ptr<Viewport>& viewport)
+void World::load_level(const std::unique_ptr<Viewport>& viewport)
 {
 	// TODO: Set the starting camera/light params. Load the starting mesh
 	// Set the camera position
@@ -51,12 +51,13 @@ void World::update()
 	// Update the position and rotation of the light
 	light.update();
 
-	//const glm::vec3 scale(1.0f);
+	const glm::vec3 scale(10.0f);
 	const rot3 rotation(0.0f, x, 0.0f);
 	//const glm::vec3 translation(0.0f, 0.0f, 0.0f);
 
 	for (const std::unique_ptr<Mesh>& mesh : meshes)
 	{
+		mesh->scale = scale;
 		mesh->rotate(rotation);
 		mesh->update();
 		modelview_matrix = camera.view_matrix * mesh->transform;
@@ -77,7 +78,7 @@ void World::transform_mesh(Mesh* mesh)
 	// Loop over all the triangles in the mesh
 	for (const Triangle& triangle : mesh->triangles)
 	{
-		/* World space */
+		/* Local space */
 		Triangle transformed_triangle = triangle;
 
 		// Compute the face normal of the triangle
@@ -98,7 +99,7 @@ void World::transform_mesh(Mesh* mesh)
 			Math3D::rotate_normal(vertex.normal, mesh->transform);
 		}
 
-		/* Camera space */
+		/* World space */
 		compute_light_intensity(transformed_triangle);
 
 		for (Vertex& vertex : transformed_triangle.vertices)

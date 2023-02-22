@@ -10,12 +10,12 @@ union SDL_Event;
 
 struct GUI
 {
-	std::shared_ptr<Window> window;
-	std::shared_ptr<World> world;
-
-	void initialize(std::shared_ptr<Window> app_window, std::shared_ptr<World> app_world);
-	void process_input(SDL_Event &event);
+	void initialize(Window* window_, World* world_);
+	void process_input(SDL_Event& event);
 	void render();
-	void print_log_messages(std::vector<LogEntry>& log);
-	void destroy();
+	static void print_log_messages(std::vector<LogEntry>& log);
+	static void destroy();
+
+	Window* window;
+	World* world;
 };

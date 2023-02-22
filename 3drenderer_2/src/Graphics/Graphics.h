@@ -16,7 +16,7 @@ struct Triangle;
 struct Viewport;
 
 /** Initialization and freeing of resources */
-void graphics_init(SDL_Renderer* app_renderer, std::shared_ptr<Viewport> app_viewport);
+void graphics_init(SDL_Renderer* renderer_, Viewport* viewport_);
 void initialize_framebuffer();
 void free_framebuffer();
 

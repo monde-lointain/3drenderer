@@ -6,10 +6,11 @@
 
 struct Entity
 {
-	Entity(glm::vec3 scale = glm::vec3(1.0f),
-		   rot3 rotation = rot3(0.0f),
-		   glm::vec3 translation = glm::vec3(0.0f));
-	~Entity() = default;
+	Entity(
+		glm::vec3 scale_ = glm::vec3(1.0f),
+		rot3 rotation_ = rot3(0.0f), 
+		glm::vec3 translation_ = glm::vec3(0.0f)
+	);
 
 	void update();
 

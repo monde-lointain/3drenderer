@@ -11,15 +11,18 @@
 #include <SDL2/SDL.h>
 #endif
 
-void PlayerController::initialize(std::shared_ptr<Window> app_window,
-	std::shared_ptr<World> app_world, std::shared_ptr<Renderer> app_renderer)
+void PlayerController::initialize(
+	Window* app_window,
+	World* app_world,
+	Renderer* app_renderer
+)
 {
 	window = app_window;
 	world = app_world;
 	renderer = app_renderer;
 }
 
-void PlayerController::process_input(SDL_Event& event)
+void PlayerController::process_input(SDL_Event& event) const
 {
 	switch (event.type)
 	{

@@ -9,7 +9,7 @@ Gizmo::Gizmo()
 
 void Gizmo::reset()
 {
-	glm::vec4 origin = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	const glm::vec4 origin = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	// x
 	bases[0].points[0] = origin;
 	bases[0].points[1] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);

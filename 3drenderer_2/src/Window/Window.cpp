@@ -8,9 +8,9 @@
 #include <SDL2/SDL.h>
 #endif
 
-void Window::initialize(std::shared_ptr<Viewport> app_viewport)
+void Window::initialize(Viewport* viewport_)
 {
-	viewport = app_viewport;
+	viewport = viewport_;
 
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)

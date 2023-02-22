@@ -8,7 +8,7 @@ struct Viewport;
 
 struct Window
 {
-	void initialize(std::shared_ptr<Viewport> app_viewport);
+	void initialize(Viewport* viewport_);
 	void destroy();
 
 	void clicked();
@@ -16,8 +16,8 @@ struct Window
 
 	SDL_Window* window = nullptr;
 	SDL_Renderer* renderer = nullptr;
+	Viewport* viewport;
 	const char* name;
-	std::shared_ptr<Viewport> viewport;
 	float current_fps;
 	float seconds_per_frame;
 	bool is_clicked;
